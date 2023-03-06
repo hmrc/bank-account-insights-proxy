@@ -1,3 +1,5 @@
 # microservice specific routes
 
-GET        /hello-world             uk.gov.hmrc.bankaccountinsightsproxy.controllers.MicroserviceHelloWorldController.hello
+POST        /check/insights        uk.gov.hmrc.bankaccountinsightsproxy.controllers.InsightsController.insights()
+
+POST        /ipp                   uk.gov.hmrc.bankaccountinsightsproxy.controllers.IPPController.ipp()
