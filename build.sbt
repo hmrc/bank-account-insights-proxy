@@ -1,8 +1,7 @@
 import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
 lazy val microservice = Project("bank-account-insights-proxy", file("."))
-  .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
+  .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin, BuildInfoPlugin)
   .settings(
     majorVersion        := 0,
     scalaVersion        := "2.13.8",
@@ -11,7 +10,10 @@ lazy val microservice = Project("bank-account-insights-proxy", file("."))
     // suppress warnings in generated routes files
     scalacOptions += "-Wconf:src=routes/.*:s",
   )
-  .settings(publishingSettings: _*)
+  .settings( // https://github.com/sbt/sbt-buildinfo
+    buildInfoKeys := Seq[BuildInfoKey](version),
+    buildInfoPackage := "buildinfo"
+  )
   .configs(IntegrationTest)
   .settings(integrationTestSettings(): _*)
   .settings(resolvers += Resolver.jcenterRepo)
