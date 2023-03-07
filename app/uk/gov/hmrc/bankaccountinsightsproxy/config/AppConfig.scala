@@ -26,9 +26,6 @@ import java.util.Base64
 
 @Singleton
 class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
-  val riskListsBaseUrl: String = servicesConfig.baseUrl("attribute-risk-lists")
-  val riskListsAuthToken = s"Basic ${createAuth("attribute-risk-lists.authToken")}"
-
   val bankAccountDataBaseUrl: String = servicesConfig.baseUrl("bank-account-data")
   val bankAccountDataAuthToken = s"Basic ${createAuth("bank-account-data.authToken")}"
 
