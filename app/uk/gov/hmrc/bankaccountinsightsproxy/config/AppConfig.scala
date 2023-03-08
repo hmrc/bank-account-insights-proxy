@@ -26,8 +26,8 @@ import java.util.Base64
 
 @Singleton
 class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
-  val bankAccountDataBaseUrl: String = servicesConfig.baseUrl("bank-account-data")
-  val bankAccountDataAuthToken = s"Basic ${createAuth("bank-account-data.authToken")}"
+  val bankAccountInsightsBaseUrl: String = servicesConfig.baseUrl("bank-account-insights")
+  val bankAccountInsightsAuthToken = s"Basic ${createAuth("bank-account-insights.authToken")}"
 
   private def createAuth(authTokenKey: String) =
     AppConfig.createAuth(

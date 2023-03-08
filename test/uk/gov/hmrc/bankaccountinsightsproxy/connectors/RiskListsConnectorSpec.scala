@@ -50,8 +50,8 @@ class RiskListsConnectorSpec
 
     new GuiceApplicationBuilder()
       .configure(
-        "microservice.services.bank-account-data.port" -> testPort,
-        "microservice.services.bank-account-data.authToken" -> testToken)
+        "microservice.services.bank-account-insights.port" -> testPort,
+        "microservice.services.bank-account-insights.authToken" -> testToken)
       .build()
   }
 
