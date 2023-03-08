@@ -32,8 +32,8 @@ class IPPConnector @Inject()(
     appConfig: AppConfig,
     @Named("internal-http-client") httpClient: HttpClient
 ) {
-  private val bankAccountDataUrl = s"${appConfig.bankAccountDataBaseUrl}/ipp"
-  private val authorization = appConfig.bankAccountDataAuthToken
+  private val bankAccountInsightsUrl = s"${appConfig.bankAccountInsightsBaseUrl}/ipp"
+  private val authorization = appConfig.bankAccountInsightsAuthToken
 
   def ipp(insightsRequest: InsightsRequest)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Either[String, IPPResponse]] = {
     // Ensure we REPLACE the auth header instead of potentially adding a second one by using the headers parameter no the POST method
@@ -43,7 +43,7 @@ class IPPConnector @Inject()(
   private def doPost(bankAccountInsightsRequest: InsightsRequest)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Either[String, IPPResponse]] = {
     import IPPResponse.Implicits._
     httpClient.POST[InsightsRequest, HttpResponse](
-      url = new URL(bankAccountDataUrl),
+      url = new URL(bankAccountInsightsUrl),
       body = bankAccountInsightsRequest,
       headers = Seq(HeaderNames.CONTENT_TYPE -> MediaTypes.`application/json`.toString())
     ) map {

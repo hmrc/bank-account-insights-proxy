@@ -31,8 +31,8 @@ class RiskListsConnector @Inject()(
     appConfig: AppConfig,
     @Named("internal-http-client") httpClient: HttpClient
 ) {
-  private val rejectListUrl = s"${appConfig.bankAccountDataBaseUrl}/reject/bank-account"
-  private val authorization = appConfig.bankAccountDataAuthToken
+  private val rejectListUrl = s"${appConfig.bankAccountInsightsBaseUrl}/reject/bank-account"
+  private val authorization = appConfig.bankAccountInsightsAuthToken
 
   def isOnRejectList(bankAccountInsightsRequest: InsightsRequest)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Either[String, Boolean]] = {
     // Ensure we REPLACE the auth header instead of potentially adding a second one by using the headers parameter no the POST method

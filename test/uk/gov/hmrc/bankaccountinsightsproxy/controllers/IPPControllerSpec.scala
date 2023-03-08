@@ -70,7 +70,7 @@ class IPPControllerSpec
     SharedMetricRegistries.clear()
     new GuiceApplicationBuilder()
       .configure(
-        "microservice.services.bank-account-data.port" -> badPort
+        "microservice.services.bank-account-insights.port" -> badPort
       )
       .overrides(bind[BackendAuthComponents].toInstance(BackendAuthComponentsStub(mockStubBehaviour)))
       .overrides(bind[AuditService].toInstance(mockAudit))
