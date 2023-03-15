@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.bankaccountinsightsproxy.controllers
 
+import org.slf4j.LoggerFactory
 import play.api.http.HeaderNames
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents, Request, Result}
@@ -39,6 +40,7 @@ class InsightsController @Inject()(
                                     cc: ControllerComponents
                                              )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   val permission: Predicate.Permission = Predicate.Permission(Resource(
     ResourceType("bank-account-insights"),
@@ -58,8 +60,9 @@ class InsightsController @Inject()(
               items = AuditItem.fromBankAccountInsightsResponse(bankAccountDetailsRiskRequest, riskResponse)
             )
               Ok(Json.toJson(riskResponse))
-            case Left(_) =>
-              InternalServerError
+            case Left(msg) =>
+              logger.error(s"Error occurred getting risk list response: ${msg}")
+              InternalServerError(s"""{"code":"ERROR", "message": "${msg}"}""")
           }
       }
     }
