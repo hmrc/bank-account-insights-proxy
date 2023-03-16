@@ -34,7 +34,7 @@ class RiskListsConnector @Inject()(
   private val rejectListUrl = s"${appConfig.bankAccountInsightsBaseUrl}/reject/bank-account"
   private val authorization = appConfig.bankAccountInsightsAuthToken
 
-  def isOnRejectList(bankAccountInsightsRequest: InsightsRequest)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Either[String, Boolean]] = {
+  def isOnRejectList(bankAccountInsightsRequest: InsightsRequest)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Either[Throwable, Boolean]] = {
     // Ensure we REPLACE the auth header instead of potentially adding a second one by using the headers parameter no the POST method
     doPost(bankAccountInsightsRequest)(ec, hc.copy(authorization = Some(Authorization(authorization))))
   }
@@ -49,7 +49,7 @@ class RiskListsConnector @Inject()(
         val res = (r.json \ "result").get.as[Boolean]
         Right(res)
     } recover { case e: Throwable =>
-      Left(e.getMessage)
+      Left(e)
     }
   }
 }

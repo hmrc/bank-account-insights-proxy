@@ -60,9 +60,9 @@ class InsightsController @Inject()(
               items = AuditItem.fromBankAccountInsightsResponse(bankAccountDetailsRiskRequest, riskResponse)
             )
               Ok(Json.toJson(riskResponse))
-            case Left(msg) =>
-              logger.error(s"Error occurred getting risk list response: ${msg}")
-              InternalServerError(s"""{"code":"ERROR", "message": "${msg}"}""")
+            case Left(throwable)     =>
+              logger.error(s"Error occurred getting risk list response: ${throwable}")
+              InternalServerError(s"""{"code":"ERROR", "message": "${throwable.getMessage}"}""")
           }
       }
     }
