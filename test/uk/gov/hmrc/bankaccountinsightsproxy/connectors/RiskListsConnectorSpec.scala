@@ -95,7 +95,7 @@ class RiskListsConnectorSpec
         }
       } { _ =>
         val result = Await.result(connector.isOnRejectList(InsightsRequest("123456", "12345678")), defaultDuration)
-        result shouldBe Left("POST of 'http://localhost:11222/reject/bank-account' returned 500. Response body: ''")
+        result shouldBe a[Left[Throwable, Boolean]]
       }
     }
   }

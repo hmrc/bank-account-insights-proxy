@@ -104,11 +104,12 @@ class InsightsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
   "When an error occurs calling attribute risk lists" should {
     "return the error message" in {
       reset(notOnWatchListCounter, onWatchListCounter, connector)
-      when(connector.isOnRejectList(any())(any(), any())).thenReturn(Future.successful(Left("Out of cheese")))
+      val expectedException = new Exception("BOOM!")
+      when(connector.isOnRejectList(any())(any(), any())).thenReturn(Future.successful(Left(expectedException)))
       when(correlationIdService.get).thenReturn("correlation-id")
 
       val result = Await.result(service.insights(InsightsRequest("999999", "12345678")), defaultDuration)
-      result shouldBe Left("Out of cheese")
+      result shouldBe Left(expectedException)
     }
   }
 }

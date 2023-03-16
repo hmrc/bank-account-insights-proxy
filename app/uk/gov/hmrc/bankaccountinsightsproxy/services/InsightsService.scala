@@ -38,16 +38,16 @@ class InsightsService @Inject()(
   def insights(bankAccountInsightsRequest: InsightsRequest)(implicit
                                                             ec: ExecutionContext,
                                                             hc: HeaderCarrier
-  ): Future[Either[String, BankAccountInsightsResponse]] = {
+  ): Future[Either[Throwable, BankAccountInsightsResponse]] = {
     val bankAccountInsightsCorrelationId = correlationIdService.get
     insightsConnector.isOnRejectList(bankAccountInsightsRequest) map {
       case Right(true) =>
         onWatchListCounter.inc()
         Right(BankAccountInsightsResponse(bankAccountInsightsCorrelationId, 100, ACCOUNT_ON_WATCH_LIST))
-      case Right(false) =>
+      case Right(false)    =>
         notOnWatchListCounter.inc()
         Right(BankAccountInsightsResponse(bankAccountInsightsCorrelationId, 0, ACCOUNT_NOT_ON_WATCH_LIST))
-      case Left(em) => Left(em)
+      case Left(throwable) => Left(throwable)
     }
   }
 }
