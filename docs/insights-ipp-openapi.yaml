@@ -1,0 +1,190 @@
+openapi: 3.0.3
+info:
+  title: Retrieve bank account insights for IPP.
+  version: 1.0.2
+  description: This API provides the ability for IPP to retrieve insights from the HMRC Customer Insights Platform for a given bank account and sort code.
+paths:
+  /check/insights:
+    post:
+      summary: Bank Account insights
+      description: |
+        Retrieve insights for the given Bank Account
+      parameters:
+        - in: header
+          required: true
+          name: User-Agent
+          description: Any string id
+          schema:
+            type: string
+            pattern: '.+'
+            example: ipp
+        - in: header
+          required: false
+          name: X-Tracking-Id
+          description: Any string identifying the current session that will be inserted into audit trails.
+          schema:
+            type: string
+            pattern: '.+'
+            example: 6d5731a4-c927-4107-b81f-eb88288bf5c9
+      requestBody:
+        description: Account Details
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object,
+              required: true
+              properties:
+                sortCode:
+                  type: string
+                  required: true
+                  minLength: 6
+                  maxLength: 6
+                  pattern: '([0-9]+){6}'
+                accountNumber:
+                  type: string
+                  required: true
+                  minLength: 8
+                  maxLength: 8
+                  pattern: '([0-9]+){8}'
+                  description: "Account numbers less than 8 digits should be pre-padded with zeros"
+                example:
+                  {
+                    "sortCode": "991122",
+                    "accountNumber": "12345678"
+                  }
+      responses:
+        '200':
+          description: IPP. The response could be an empty document ('{}') if CIP have not seen the bank account details before.
+          headers: { }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: true
+                properties:
+                  risk:
+                    type: object
+                    required: true
+                    properties:
+                      bankAccountInsightsCorrelationId:
+                        type: string
+                        required: true
+                      riskScore:
+                        type: number
+                        required: true
+                      reason:
+                        type: string
+                        enum: [ACCOUNT_ON_WATCH_LIST, ACCOUNT_NOT_ON_WATCH_LIST]
+                        required: true
+                  ipp:
+                    type: object
+                    required: false
+                    properties:
+                      sortCode:
+                        type: string
+                        required: true
+                        minLength: 6
+                        maxLength: 6
+                        pattern: '([0-9]+){6}'
+                      accountNumber:
+                        type: string
+                        required: true
+                        minLength: 8
+                        maxLength: 8
+                        pattern: '([0-9]+){8}'
+                      correlationId:
+                        type: string
+                        required: true
+                      ippComponents:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            identifier:
+                              type: string
+                              required: true
+                              pattern: '.+'
+                            count:
+                              type: number
+                              required: true
+                            componentValues:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  value:
+                                    type: string
+                                    required: true
+                                    pattern: '.+'
+                                  numOfOccurrences:
+                                    type: number
+                                    required: true
+                                  lastSeen:
+                                    type: string
+                                    required: true
+                                    format: date-time
+                example:
+                  {
+                    "risk": {
+                      "bankAccountInsightsCorrelationId": "a8876280-3d36-4ae6-9c08-af07a8453521",
+                      "riskScore": 0,
+                      "reason": "ACCOUNT_NOT_ON_WATCH_LIST"
+                    },
+                    "ipp": {
+                      "sortCode": "123456",
+                      "accountNumber": "12345678",
+                      "correlationId": "1234567-123456-1234567",
+                      "ippComponents": [
+                        {
+                          "identifier": "vrn",
+                          "count": 2,
+                          "componentValues": [
+                            {
+                              "value": "AB153474/ASD",
+                              "numOfOccurrences": 4,
+                              "lastSeen": "2023-01-05 13:01:59.123"
+                            },
+                            {
+                              "value": "AB978474/ASC",
+                              "numOfOccurrences": 2,
+                              "lastSeen": "2023-01-13 17:01:31.111"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+        '3XX':
+          description: |
+            The request has been redirected. Clients should follow the redirect using the location header as per the HTTP specification.
+        '400':
+          description: |
+            The request was invalid, e.g the account number or sort code was not well formed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    pattern: '.+'
+                  desc:
+                    type: string
+                    pattern: '.+'
+                    example: "123456: invalid sortcode."
+                    description: Full description of the error, designed to be human readable.
+              examples:
+                INVALID_SORT_CODE:
+                  value: {
+                    "code": "INVALID_SORT_CODE",
+                    "desc": "A badly formatted, or missing sort code."
+                  }
+                INVALID_ACCOUNT_NUMBER:
+                  value: {
+                    "code": "INVALID_ACCOUNT_NUMBER",
+                    "desc": "A badly formatted, or missing account number."
+                  }
+        '5XX':
+          description: |
+            An unexpected server error occurred when processing the request. These are usually temporary and consumers should try again.
