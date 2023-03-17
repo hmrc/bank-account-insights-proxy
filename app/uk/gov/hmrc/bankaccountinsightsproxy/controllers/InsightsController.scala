@@ -26,6 +26,7 @@ import uk.gov.hmrc.bankaccountinsightsproxy.model.request.InsightsRequest.implic
 import uk.gov.hmrc.bankaccountinsightsproxy.model.response.BankAccountInsightsResponse.implicits._
 import uk.gov.hmrc.bankaccountinsightsproxy.services.{AuditService, InsightsService}
 import uk.gov.hmrc.bankaccountinsightsproxy.utils.json.simplifyJsonErrors
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.internalauth.client.{BackendAuthComponents, IAAction, Predicate, Resource, ResourceLocation, ResourceType}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -53,16 +54,16 @@ class InsightsController @Inject()(
         insightsService
           .insights(bankAccountDetailsRiskRequest)
           .map {
-            case Right(riskResponse) => audit.succeeded(
+            case Right(riskResponse)         => audit.succeeded(
               tags = Map(),
               headerCarrier = hc(request),
               userAgent = request.headers.get(HeaderNames.USER_AGENT),
               items = AuditItem.fromBankAccountInsightsResponse(bankAccountDetailsRiskRequest, riskResponse)
             )
               Ok(Json.toJson(riskResponse))
-            case Left(throwable)     =>
-              logger.error(s"Error occurred getting risk list response: ${throwable}")
-              InternalServerError(s"""{"code":"ERROR", "message": "${throwable.getMessage}"}""")
+            case Left(e) =>
+              logger.error(s"Error occurred getting risk list response: ${e}")
+              InternalServerError(s"""{"code":"ERROR", "message": "Error occurred"}""")
           }
       }
     }
