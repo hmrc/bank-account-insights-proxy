@@ -16,64 +16,39 @@
 
 package uk.gov.hmrc.bankaccountinsightsproxy.controllers
 
-import org.slf4j.LoggerFactory
-import play.api.http.HeaderNames
-import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
-import play.api.mvc.{Action, ControllerComponents, Request, Result}
-import uk.gov.hmrc.bankaccountinsightsproxy.model.audit.AuditItem
-import uk.gov.hmrc.bankaccountinsightsproxy.model.request.InsightsRequest
-import uk.gov.hmrc.bankaccountinsightsproxy.model.request.InsightsRequest.implicits._
-import uk.gov.hmrc.bankaccountinsightsproxy.model.response.BankAccountInsightsResponse.implicits._
-import uk.gov.hmrc.bankaccountinsightsproxy.services.{AuditService, InsightsService}
-import uk.gov.hmrc.bankaccountinsightsproxy.utils.json.simplifyJsonErrors
-import uk.gov.hmrc.http.UpstreamErrorResponse
-import uk.gov.hmrc.internalauth.client.{BackendAuthComponents, IAAction, Predicate, Resource, ResourceLocation, ResourceType}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
+import uk.gov.hmrc.bankaccountinsightsproxy.config.AppConfig
+import uk.gov.hmrc.bankaccountinsightsproxy.connectors.DownstreamConnector
+import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 @Singleton
-class InsightsController @Inject()(
-                                    insightsService: InsightsService,
-                                    audit: AuditService,
-                                    internalAuth: BackendAuthComponents,
-                                    cc: ControllerComponents
-                                             )(implicit ec: ExecutionContext)
+class InsightsController @Inject()(connector: DownstreamConnector,
+                                   config: AppConfig,
+                                   internalAuth: BackendAuthComponents,
+                                   cc: ControllerComponents
+                                  )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
-  private val logger = LoggerFactory.getLogger(this.getClass)
 
-  val permission: Predicate.Permission = Predicate.Permission(Resource(
-    ResourceType("bank-account-insights"),
-    ResourceLocation("check")),
-    IAAction("READ"))
+  def checkInsights(): Action[AnyContent] = forwardIfAuthorised(ResourceLocation("check"))
 
-  def insights(): Action[JsValue] = internalAuth.authorizedAction(permission).async(parse.json) {
-    implicit request: Request[JsValue] => {
-      withValidRiskRequest { bankAccountDetailsRiskRequest =>
-        insightsService
-          .insights(bankAccountDetailsRiskRequest)
-          .map {
-            case Right(riskResponse)         => audit.succeeded(
-              tags = Map(),
-              headerCarrier = hc(request),
-              userAgent = request.headers.get(HeaderNames.USER_AGENT),
-              items = AuditItem.fromBankAccountInsightsResponse(bankAccountDetailsRiskRequest, riskResponse)
-            )
-              Ok(Json.toJson(riskResponse))
-            case Left(e) =>
-              logger.error(s"Error occurred getting risk list response: ${e}")
-              InternalServerError(s"""{"code":"ERROR", "message": "Error occurred"}""")
-          }
-      }
+  def ipp(): Action[AnyContent] = forwardIfAuthorised(ResourceLocation("ipp"))
+
+  private def forwardIfAuthorised(resourceLocation: ResourceLocation) = {
+    val permission = Predicate.Permission(
+      Resource(ResourceType("bank-account-insights"), resourceLocation),
+      IAAction("READ"))
+
+    internalAuth.authorizedAction(permission).async(parse.anyContent) {
+      implicit request: Request[AnyContent] =>
+
+        val path = request.target.uri.toString
+        val url = s"${config.bankAccountInsightsBaseUrl}$path"
+
+        connector.forward(request, url, config.bankAccountInsightsAuthToken)
     }
   }
-
-  private def withValidRiskRequest(f: InsightsRequest => Future[Result])(implicit request: Request[JsValue]): Future[Result] =
-    request.body.validate[InsightsRequest] match {
-      case JsSuccess(req, _) =>
-        f(req)
-      case JsError(payloadErrors) =>
-        Future.successful(BadRequest(simplifyJsonErrors(payloadErrors)))
-    }
 }
