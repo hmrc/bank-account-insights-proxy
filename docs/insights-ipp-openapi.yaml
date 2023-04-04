@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Retrieve bank account insights for IPP.
-  version: 1.0.2
+  version: 1.0.3
   description: This API provides the ability for IPP to retrieve insights from the HMRC Customer Insights Platform for a given bank account and sort code.
 paths:
   /check/insights:
@@ -32,7 +32,7 @@ paths:
         content:
           'application/json':
             schema:
-              type: object,
+              type: object
               required: true
               properties:
                 sortCode:
@@ -48,11 +48,11 @@ paths:
                   maxLength: 8
                   pattern: '([0-9]+){8}'
                   description: "Account numbers less than 8 digits should be pre-padded with zeros"
-                example:
-                  {
-                    "sortCode": "991122",
-                    "accountNumber": "12345678"
-                  }
+              example:
+                {
+                  "sortCode": "991122",
+                  "accountNumber": "12345678"
+                }
       responses:
         '200':
           description: IPP. The response could be an empty document ('{}') if CIP have not seen the bank account details before.
@@ -63,52 +63,48 @@ paths:
                 type: object
                 required: true
                 properties:
-                  risk:
-                    type: object
+                  sortCode:
+                    type: string
                     required: true
-                    properties:
-                      bankAccountInsightsCorrelationId:
-                        type: string
-                        required: true
-                      riskScore:
-                        type: number
-                        required: true
-                      reason:
-                        type: string
-                        enum: [ACCOUNT_ON_WATCH_LIST, ACCOUNT_NOT_ON_WATCH_LIST]
-                        required: true
-                  ipp:
+                    minLength: 6
+                    maxLength: 6
+                    pattern: '([0-9]+){6}'
+                  accountNumber:
+                    type: string
+                    required: true
+                    minLength: 8
+                    maxLength: 8
+                    pattern: '([0-9]+){8}'
+                  correlationId:
+                    type: string
+                    required: true
+                  insights:
                     type: object
-                    required: false
                     properties:
-                      sortCode:
-                        type: string
-                        required: true
-                        minLength: 6
-                        maxLength: 6
-                        pattern: '([0-9]+){6}'
-                      accountNumber:
-                        type: string
-                        required: true
-                        minLength: 8
-                        maxLength: 8
-                        pattern: '([0-9]+){8}'
-                      correlationId:
-                        type: string
-                        required: true
-                      ippComponents:
+                      risk:
+                        type: object
+                        properties:
+                          riskScore:
+                            maximum: 100
+                            minimum: 0
+                            type: number
+                            description: Risk score
+                          reason:
+                            type: string
+                            description: Reason for risk score
+                      relationships:
                         type: array
                         items:
                           type: object
                           properties:
-                            identifier:
+                            attribute:
                               type: string
                               required: true
                               pattern: '.+'
                             count:
                               type: number
                               required: true
-                            componentValues:
+                            attributeValues:
                               type: array
                               items:
                                 type: object
@@ -124,22 +120,23 @@ paths:
                                     type: string
                                     required: true
                                     format: date-time
+
                 example:
                   {
-                    "risk": {
-                      "bankAccountInsightsCorrelationId": "a8876280-3d36-4ae6-9c08-af07a8453521",
-                      "riskScore": 0,
-                      "reason": "ACCOUNT_NOT_ON_WATCH_LIST"
-                    },
-                    "ipp": {
-                      "sortCode": "123456",
-                      "accountNumber": "12345678",
-                      "correlationId": "1234567-123456-1234567",
-                      "ippComponents": [
+                    "sortCode": "123456",
+                    "accountNumber": "12345678",
+                    "correlationId": "1234567-123456-1234567",
+                    "insights": {
+                      "risk": {
+                        "bankAccountInsightsCorrelationId": "a8876280-3d36-4ae6-9c08-af07a8453521",
+                        "riskScore": 0,
+                        "reason": "ACCOUNT_NOT_ON_WATCH_LIST"
+                      },
+                      "relationships": [
                         {
-                          "identifier": "vrn",
+                          "attribute": "vrn",
                           "count": 2,
-                          "componentValues": [
+                          "attributeValues": [
                             {
                               "value": "AB153474/ASD",
                               "numOfOccurrences": 4,
