@@ -17,8 +17,6 @@
 package uk.gov.hmrc.bankaccountinsightsproxy.controllers
 
 import akka.stream.Materializer
-import com.codahale.metrics.SharedMetricRegistries
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -26,93 +24,142 @@ import org.scalatestplus.mockito.MockitoSugar.mock
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.http.Status
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.mvc.ControllerComponents
+import play.api.mvc.Results._
+import play.api.mvc.{ControllerComponents, Result}
+import play.api.routing.sird.{POST => SPOST}
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
-import uk.gov.hmrc.bankaccountinsightsproxy.model.request.InsightsRequest
-import uk.gov.hmrc.bankaccountinsightsproxy.model.request.InsightsRequest.implicits._
-import uk.gov.hmrc.bankaccountinsightsproxy.model.response.BankAccountInsightsResponse
-import uk.gov.hmrc.bankaccountinsightsproxy.services.{AuditService, InsightsService}
+import play.core.server.{Server, ServerConfig}
+import uk.gov.hmrc.bankaccountinsightsproxy.config.AppConfig
 import uk.gov.hmrc.internalauth.client.Retrieval.EmptyRetrieval
 import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.internalauth.client.test.{BackendAuthComponentsStub, StubBehaviour}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
+import scala.language.postfixOps
 
-class InsightsControllerSpec
-  extends AnyWordSpec
-    with Matchers
-    with GuiceOneAppPerSuite {
+class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
+  val insightsPort = 11222
+  val authToken = "test-token"
 
-  override implicit lazy val app: Application = {
-    SharedMetricRegistries.clear()
-    new GuiceApplicationBuilder().build()
-  }
-
-  implicit val mat: Materializer = app.injector.instanceOf[Materializer]
-
-  private val mockInsightsService = mock[InsightsService]
-  private val mockStubBehaviour = mock[StubBehaviour]
-  private val mockAudit = mock[AuditService]
-
-  when(mockInsightsService.insights(any())(any(), any()))
-    .thenReturn(
-      Future.successful(Right(
-        BankAccountInsightsResponse(
-          "c33b596c-2cdd-4bf7-a20c-8efd1b32802f",
-          10,
-          "Looks fine"
-        ))
-      )
-    )
-
+  implicit val controllerComponents: ControllerComponents = Helpers.stubControllerComponents()
 
   val expectedPermission: Predicate.Permission = Predicate.Permission(Resource(
     ResourceType("bank-account-insights"),
     ResourceLocation("check")),
     IAAction("READ"))
 
+  private val mockStubBehaviour = mock[StubBehaviour]
   when(mockStubBehaviour.stubAuth(Some(expectedPermission), EmptyRetrieval)).thenReturn(Future.successful())
 
-  implicit val controllerComponents: ControllerComponents = Helpers.stubControllerComponents()
+  override lazy val app: Application = new GuiceApplicationBuilder()
+    .configure("microservice.services.bank-account-insights.port" -> insightsPort)
+    .configure("microservice.services.bank-account-insights.authToken" -> authToken)
+    .overrides(bind[ControllerComponents].toInstance(controllerComponents))
+    .overrides(bind[BackendAuthComponents].toInstance(BackendAuthComponentsStub(mockStubBehaviour)))
+    .build()
 
-  private val controller = new InsightsController(
-    mockInsightsService,
-    mockAudit,
-    BackendAuthComponentsStub(mockStubBehaviour),
-    controllerComponents
-  )
+  private val controller = app.injector.instanceOf[InsightsController]
+  implicit val mat: Materializer = app.injector.instanceOf[Materializer]
 
-  "InsightsController" should {
-    "return 200" when {
-      "POST /cip-insights/bank-account with valid request" in {
-        val payload =
-          InsightsRequest("123456", "12345678")
-        val fakeRequest =
-          FakeRequest("POST", "/cip-insights/bank-account")
-            .withHeaders("content-type" -> "application/json", "Authorization" -> "1234")
-            .withBody(Json.toJson(payload))
+  "POST /check/insights" when {
+    "Given a valid internal auth token" should {
+      val headers = Seq("True-Calling-Client" -> "example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+      val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
+      val response =
+        """{
+          |  "score": "100",
+          |  "reason": "ACCOUNT_ON_WATCH_LIST",
+          |  "correlationId": "12345-12345-12345-12345"
+          |}""".stripMargin
 
-        val result = controller.insights()(fakeRequest)
+      behave like downstreamConnectorEndpoint("/check/insights", response) { () =>
+        controller.checkInsights()(
+          FakeRequest("POST", "/check/insights").withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+      }
+    }
+  }
+
+  "POST /ipp" when {
+    "Given a valid internal auth token" should {
+      val headers = Seq("True-Calling-Client" -> "example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+      val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
+      val response =
+        """{
+          |  "score": "100",
+          |  "reason": "ACCOUNT_ON_WATCH_LIST",
+          |  "correlationId": "12345-12345-12345-12345"
+          |}""".stripMargin
+
+      behave like downstreamConnectorEndpoint("/ipp", response) { () =>
+        controller.checkInsights()(
+          FakeRequest("POST", "/ipp").withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+      }
+    }
+  }
+
+  def downstreamConnectorEndpoint(url: String, response: String)(invoke: () => Future[Result]): Unit = {
+    "forward a 200 response from the downstream service" in {
+
+      Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) { components =>
+        import components.{defaultActionBuilder => Action}
+        {
+          case r@SPOST(u) if u.path == url =>
+            r.headers.get("True-Calling-Client") shouldBe Some("example-service")
+            r.headers.get("Authorization") shouldBe Some("Basic " + AppConfig.createAuth("bank-account-insights-proxy", authToken))
+            Action(Ok(response).withHeaders("Content-Type" -> "application/json"))
+        }
+      } { _ =>
+
+        val result = invoke()
         status(result) shouldBe Status.OK
+        contentAsString(result) shouldBe response
       }
     }
 
-    "return 400" when {
-      "POST /cip-insights/bank-account with invalid request" in {
-        val payload =
-          InsightsRequest("12345", "12345678")
-        val fakeRequest =
-          FakeRequest("POST", "/cip-insights/bank-account")
-            .withHeaders("content-type" -> "application/json", "Authorization" -> "1234")
-            .withBody(Json.toJson(payload))
+    "forward a 400 response from the downstream service" in {
+      val errorResponse = """{"code": "MALFORMED_JSON", "path.missing: Subject"}""".stripMargin
 
-        val result = controller.insights()(fakeRequest)
+      Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) { components =>
+        import components.{defaultActionBuilder => Action}
+        {
+          case r@SPOST(u) if u.path == url =>
+            Action(BadRequest(errorResponse).withHeaders("Content-Type" -> "application/json"))
+        }
+      } { _ =>
+        val result = invoke()
         status(result) shouldBe Status.BAD_REQUEST
+        contentAsString(result) shouldBe errorResponse
       }
+    }
+
+    "handle a malformed json payload" in {
+      val errorResponse = """{"code": "MALFORMED_JSON", "path.missing: Subject"}""".stripMargin
+
+      Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) { components =>
+        import components.{defaultActionBuilder => Action}
+        {
+          case r@SPOST(u) if u.path == url =>
+            Action(BadRequest(errorResponse).withHeaders("Content-Type" -> "application/json"))
+        }
+      } { _ =>
+        val result = invoke()
+        status(result) shouldBe Status.BAD_REQUEST
+        contentAsString(result) shouldBe errorResponse
+      }
+    }
+
+    "return bad gateway if there is no connectivity to the downstream service" in {
+      val errorResponse = """{"code": "REQUEST_DOWNSTREAM", "desc": "An issue occurred when the downstream service tried to handle the request"}""".stripMargin
+
+      val result = invoke()
+      status(result)(30 seconds) shouldBe Status.BAD_GATEWAY
+      contentAsString(result) shouldBe errorResponse
     }
   }
 }

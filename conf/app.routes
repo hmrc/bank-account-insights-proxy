@@ -1,5 +1,5 @@
 # microservice specific routes
 
-POST        /check/insights        uk.gov.hmrc.bankaccountinsightsproxy.controllers.InsightsController.insights()
+POST        /check/insights        uk.gov.hmrc.bankaccountinsightsproxy.controllers.InsightsController.checkInsights()
 
-POST        /ipp                   uk.gov.hmrc.bankaccountinsightsproxy.controllers.IPPController.ipp()
+POST        /ipp                   uk.gov.hmrc.bankaccountinsightsproxy.controllers.InsightsController.ipp()
