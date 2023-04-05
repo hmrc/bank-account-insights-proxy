@@ -33,9 +33,9 @@ class InsightsController @Inject()(connector: DownstreamConnector,
                                   )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
 
-  def checkInsights(): Action[AnyContent] = forwardIfAuthorised(ResourceLocation("check"))
+  def checkInsights: Action[AnyContent] = forwardIfAuthorised(ResourceLocation("check"))
 
-  def ipp(): Action[AnyContent] = forwardIfAuthorised(ResourceLocation("ipp"))
+  def ipp: Action[AnyContent] = forwardIfAuthorised(ResourceLocation("ipp"))
 
   private def forwardIfAuthorised(resourceLocation: ResourceLocation) = {
     val permission = Predicate.Permission(
@@ -45,7 +45,7 @@ class InsightsController @Inject()(connector: DownstreamConnector,
     internalAuth.authorizedAction(permission).async(parse.anyContent) {
       implicit request: Request[AnyContent] =>
 
-        val path = request.target.uri.toString.replace("bank-account-insights-proxy", "bank-account-insights")
+        val path = request.target.uri.toString
         val url = s"${config.bankAccountInsightsBaseUrl}$path"
 
         connector.forward(request, url, config.bankAccountInsightsAuthToken)

@@ -2,6 +2,5 @@
 
 ->         /                              health.Routes
 ->         /                              app.Routes
-->         /bank-account-insights-proxy   app.Routes
 
 GET        /admin/metrics                 com.kenshoo.play.metrics.MetricsController.metrics
