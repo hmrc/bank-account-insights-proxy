@@ -45,7 +45,7 @@ class InsightsController @Inject()(connector: DownstreamConnector,
     internalAuth.authorizedAction(permission).async(parse.anyContent) {
       implicit request: Request[AnyContent] =>
 
-        val path = request.target.uri.toString.replace("bank-account-insights-proxy", "bank-account-insights")
+        val path = request.target.uri.toString
         val url = s"${config.bankAccountInsightsBaseUrl}$path"
 
         connector.forward(request, url, config.bankAccountInsightsAuthToken)
