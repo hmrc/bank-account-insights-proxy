@@ -33,9 +33,9 @@ class InsightsController @Inject()(connector: DownstreamConnector,
                                   )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
 
-  def checkInsights(): Action[AnyContent] = forwardIfAuthorised(ResourceLocation("check"))
+  def checkInsights: Action[AnyContent] = forwardIfAuthorised(ResourceLocation("check"))
 
-  def ipp(): Action[AnyContent] = forwardIfAuthorised(ResourceLocation("ipp"))
+  def ipp: Action[AnyContent] = forwardIfAuthorised(ResourceLocation("ipp"))
 
   private def forwardIfAuthorised(resourceLocation: ResourceLocation) = {
     val permission = Predicate.Permission(
