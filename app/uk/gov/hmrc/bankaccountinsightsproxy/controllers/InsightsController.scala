@@ -16,39 +16,38 @@
 
 package uk.gov.hmrc.bankaccountinsightsproxy.controllers
 
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
 import uk.gov.hmrc.bankaccountinsightsproxy.config.AppConfig
 import uk.gov.hmrc.bankaccountinsightsproxy.connectors.DownstreamConnector
-import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class InsightsController @Inject()(connector: DownstreamConnector,
                                    config: AppConfig,
-                                   internalAuth: BackendAuthComponents,
+                                   clientAllowListChecker: AccessChecker,
                                    cc: ControllerComponents
                                   )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
 
-  def checkInsights: Action[AnyContent] = forwardIfAuthorised(ResourceLocation("check"))
+  def checkInsights: Action[AnyContent] = forwardIfAllowed()
 
-  def ipp: Action[AnyContent] = forwardIfAuthorised(ResourceLocation("ipp"))
+  def ipp: Action[AnyContent] = forwardIfAllowed()
 
-  private def forwardIfAuthorised(resourceLocation: ResourceLocation) = {
-    val permission = Predicate.Permission(
-      Resource(ResourceType("bank-account-insights"), resourceLocation),
-      IAAction("READ"))
-
-    internalAuth.authorizedAction(permission).async(parse.anyContent) {
+  private def forwardIfAllowed() = Action.async(parse.anyContent) {
       implicit request: Request[AnyContent] =>
 
-        val path = request.target.uri.toString
-        val url = s"${config.bankAccountInsightsBaseUrl}$path"
+        val callingClient = clientAllowListChecker.getClientFromUserAgent(request)
+        if (!clientAllowListChecker.isClientAllowed(callingClient)) Future.successful {
+          Forbidden(Json.parse(clientAllowListChecker.forbiddenResponse(callingClient)))
+        } else {
+          val path = request.target.uri.toString
+          val url = s"${config.bankAccountInsightsBaseUrl}$path"
 
-        connector.forward(request, url, config.bankAccountInsightsAuthToken)
+          connector.forward(request, url, config.bankAccountInsightsAuthToken)
+        }
     }
-  }
 }
