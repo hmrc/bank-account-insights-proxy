@@ -17,10 +17,8 @@
 package uk.gov.hmrc.bankaccountinsightsproxy.controllers
 
 import akka.stream.Materializer
-import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.mockito.MockitoSugar.mock
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.http.Status
@@ -34,11 +32,7 @@ import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
 import play.core.server.{Server, ServerConfig}
 import uk.gov.hmrc.bankaccountinsightsproxy.config.AppConfig
-import uk.gov.hmrc.internalauth.client.Retrieval.EmptyRetrieval
-import uk.gov.hmrc.internalauth.client._
-import uk.gov.hmrc.internalauth.client.test.{BackendAuthComponentsStub, StubBehaviour}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
@@ -49,27 +43,20 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
 
   implicit val controllerComponents: ControllerComponents = Helpers.stubControllerComponents()
 
-  val expectedPermission: Predicate.Permission = Predicate.Permission(Resource(
-    ResourceType("bank-account-insights"),
-    ResourceLocation("check")),
-    IAAction("READ"))
-
-  private val mockStubBehaviour = mock[StubBehaviour]
-  when(mockStubBehaviour.stubAuth(Some(expectedPermission), EmptyRetrieval)).thenReturn(Future.successful())
-
   override lazy val app: Application = new GuiceApplicationBuilder()
     .configure("microservice.services.bank-account-insights.port" -> insightsPort)
     .configure("microservice.services.bank-account-insights.authToken" -> authToken)
+    .configure("microservice.services.access-control.enabled" -> true)
+    .configure("microservice.services.access-control.allow-list.0" -> "example-service")
     .overrides(bind[ControllerComponents].toInstance(controllerComponents))
-    .overrides(bind[BackendAuthComponents].toInstance(BackendAuthComponentsStub(mockStubBehaviour)))
     .build()
 
   private val controller = app.injector.instanceOf[InsightsController]
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
 
   "POST /check/insights" when {
-    "Given a valid internal auth token" should {
-      val headers = Seq("True-Calling-Client" -> "example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+    "the user-agent is on the allow list" should {
+      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "example-service", "Content-Type" -> "application/json")
       val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
       val response =
         """{
@@ -83,11 +70,23 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
           FakeRequest("POST", "/check/insights").withJsonBody(Json.parse(request)).withHeaders(headers: _*))
       }
     }
+
+    "the user-agent is NOT on the allow list" should {
+      "return forbidden" in {
+        val headers = Seq("True-Calling-Client" -> "another-service", "User-Agent" -> "another-service", "Content-Type" -> "application/json")
+        val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
+
+        val result = controller.checkInsights()(
+          FakeRequest("POST", "/check/insights").withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+
+        status(result) shouldBe Status.FORBIDDEN
+      }
+    }
   }
 
   "POST /ipp" when {
     "Given a valid internal auth token" should {
-      val headers = Seq("True-Calling-Client" -> "example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
       val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
       val response =
         """{
@@ -97,8 +96,20 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
           |}""".stripMargin
 
       behave like downstreamConnectorEndpoint("/ipp", response) { () =>
-        controller.checkInsights()(
+        controller.ipp()(
           FakeRequest("POST", "/ipp").withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+      }
+    }
+
+    "the user-agent is NOT on the allow list" should {
+      "return forbidden" in {
+        val headers = Seq("True-Calling-Client" -> "another-service", "User-Agent" -> "another-service", "Content-Type" -> "application/json")
+        val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
+
+        val result = controller.ipp()(
+          FakeRequest("POST", "/ipp").withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+
+        status(result) shouldBe Status.FORBIDDEN
       }
     }
   }
