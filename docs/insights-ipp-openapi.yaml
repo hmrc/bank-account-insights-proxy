@@ -33,17 +33,17 @@ paths:
           'application/json':
             schema:
               type: object
-              required: true
+              required: 
+                - sortcode
+                - accountNumber
               properties:
                 sortCode:
                   type: string
-                  required: true
                   minLength: 6
                   maxLength: 6
                   pattern: '([0-9]+){6}'
                 accountNumber:
                   type: string
-                  required: true
                   minLength: 8
                   maxLength: 8
                   pattern: '([0-9]+){8}'
@@ -61,23 +61,23 @@ paths:
             application/json:
               schema:
                 type: object
-                required: true
+                required: 
+                  - sortCode
+                  - accountNumber
+                  - correlationId
                 properties:
                   sortCode:
                     type: string
-                    required: true
                     minLength: 6
                     maxLength: 6
                     pattern: '([0-9]+){6}'
                   accountNumber:
                     type: string
-                    required: true
                     minLength: 8
                     maxLength: 8
                     pattern: '([0-9]+){8}'
                   correlationId:
                     type: string
-                    required: true
                   insights:
                     type: object
                     properties:
@@ -96,31 +96,32 @@ paths:
                         type: array
                         items:
                           type: object
+                          required:
+                            - attribute
+                            - count
                           properties:
                             attribute:
                               type: string
-                              required: true
                               pattern: '.+'
                             count:
                               type: number
-                              required: true
                             attributeValues:
                               type: array
                               items:
                                 type: object
+                                required:
+                                  - value
+                                  - numOfOccurrences
+                                  - lastSeen
                                 properties:
                                   value:
                                     type: string
-                                    required: true
                                     pattern: '.+'
                                   numOfOccurrences:
                                     type: number
-                                    required: true
                                   lastSeen:
                                     type: string
-                                    required: true
                                     format: date-time
-
                 example:
                   {
                     "sortCode": "123456",
@@ -128,7 +129,6 @@ paths:
                     "correlationId": "1234567-123456-1234567",
                     "insights": {
                       "risk": {
-                        "bankAccountInsightsCorrelationId": "a8876280-3d36-4ae6-9c08-af07a8453521",
                         "riskScore": 0,
                         "reason": "ACCOUNT_NOT_ON_WATCH_LIST"
                       },
@@ -146,6 +146,39 @@ paths:
                               "value": "AB978474/ASC",
                               "numOfOccurrences": 2,
                               "lastSeen": "2023-01-13 17:01:31.111"
+                            }
+                          ]
+                        },
+                        {
+                          "attribute": "ct_utr",
+                          "count": 1,
+                          "attributeValues": [
+                            {
+                              "value": "1341325909",
+                              "numOfOccurrences": 5,
+                              "lastSeen": "2023-01-05 13:01:59.123"
+                            }
+                          ]
+                        },
+                        {
+                          "attribute": "person_full_name",
+                          "count": 1,
+                          "attributeValues": [
+                            {
+                              "value": "John Smith",
+                              "numOfOccurrences": 5,
+                              "lastSeen": "2023-02-05 13:01:59.123"
+                            }
+                          ]
+                        },
+                        {
+                          "attribute": "agent_code",
+                          "count": 1,
+                          "attributeValues": [
+                            {
+                              "value": "FH73K1JE83HFW",
+                              "numOfOccurrences": 2,
+                              "lastSeen": "2023-03-05 13:01:59.123"
                             }
                           ]
                         }
