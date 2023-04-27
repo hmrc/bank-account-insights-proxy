@@ -34,37 +34,51 @@ paths:
             schema:
               type: object
               required:
-                - opinionAttributes
                 - correlationId
+                - submitter
+                - submission
                 - outcome
               properties:
-                opinionAttributes:
-                  type: object
-                  required:
-                    - sortCode
-                    - accountNumber
-                  properties:
-                    sortCode:
-                      type: string
-                      minLength: 6
-                      maxLength: 6
-                      pattern: '([0-9]+){6}'
-                    accountNumber:
-                      type: string
-                      minLength: 8
-                      maxLength: 8
-                      pattern: '([0-9]+){8}'
                 correlationId:
                   type: string
                   format: uuid
+                submitter:
+                  type: string
+                submission:
+                  oneOf:
+                    - $ref: "#/components/schemas/NINO_SUBMISSION"
+                    - $ref: "#/components/schemas/BANK_ACCOUNT_SUBMISSION"
                 outcome:
                   oneOf:
-                  - $ref: "#/components/schemas/ACCEPTED"
-                  - $ref: "#/components/schemas/INVESTIGATING"
-                  - $ref: "#/components/schemas/REJECTED"
-                  - $ref: "#/components/schemas/HOLD"
-                  - $ref: "#/components/schemas/PAYMENT_ALLOCATED"
-                  - $ref: "#/components/schemas/PAYMENT_NOT_ALLOCATED"
+                    - $ref: "#/components/schemas/ACCEPTED"
+                    - $ref: "#/components/schemas/INVESTIGATING"
+                    - $ref: "#/components/schemas/REJECTED"
+                    - $ref: "#/components/schemas/HOLD"
+                    - $ref: "#/components/schemas/PAYMENT_ALLOCATED"
+                    - $ref: "#/components/schemas/PAYMENT_NOT_ALLOCATED"
+            example:
+              {
+                "correlationId": "33df37a4-a535-41fe-8032-7ab718b45526",
+                "submitter": "ipp", //Unnecessary??
+                "submission": {
+                  "submissionType": "bank-account",
+                  "submissionAttribute": {
+                    "sortCode": "608580",
+                    "accountNumber": "48835625"
+                  }
+                },
+                "outcome": {
+                  "outcomeType": "PAYMENT_ALLOCATION",
+                  "decision": "PAYMENT_ALLOCATED",
+                  "reasons": "account allocated to details", //freeform text - not parsed
+                  "evidence": { //respond with either/or/and given relationships and new ones
+                    "sa_utr": "0123456789",
+                    "paye_ref": "ABC/A1234",
+                    "full_name": "Jane Smith",
+                    "user_id": "0123456789112345" //eg government gateway id of the end user - possibly an object type to hold type of used id
+                  }
+                }
+              }
       responses:
         '200':
           description: |
@@ -78,6 +92,46 @@ paths:
 
 components:
   schemas:
+    NINO_SUBMISSION:
+      type: object
+      properties:
+        submissionType:
+          type: string
+          enum:
+            - "nino"
+        submissionAttribute:
+          type: object
+          required:
+            - nino
+          properties:
+            nino:
+              type: string
+              pattern: "[A-Za-z&&[^DFIQUdfiqu]][A-Za-z&&[^DFIQUOdfiquo]]\p{Digit}{6}[ABCDabcd]?"
+    BANK_ACCOUNT_SUBMISSION:
+      type: object
+      properties:
+        submissionType:
+          type: string
+          enum:
+            - "bank-account"
+        submissionAttribute:
+          type: object
+          required:
+            - sortCode
+            - accountNumber
+          properties:
+            sortCode:
+              type: string
+              minLength: 6
+              maxLength: 6
+              pattern: '([0-9]+){6}'
+            accountNumber:
+              type: string
+              minLength: 8
+              maxLength: 8
+              pattern: '([0-9]+){8}'
+    EVIDENCE:
+      type: object
     ACCEPTED:
       type: object
       required:
@@ -100,6 +154,8 @@ components:
               - "KNOWN_TRUSTED_CUSTOMER"
               - "OTHER_INFORMATION_NOT_PROVIDED_IN_RISK_OPINION"
               - "INVESTIGATION_CONCLUDES_NOT_FRAUD"
+        evidence:
+          $ref: "#/components/schemas/EVIDENCE"
     INVESTIGATING:
       type: object
       required:
@@ -119,6 +175,8 @@ components:
               - "KNOWN_UNTRUSTED_CUSTOMER"
               - "OTHER_INFORMATION_NOT_PROVIDED_IN_RISK_OPINION"
               - "RANDOM_AUDIT"
+        evidence:
+          $ref: "#/components/schemas/EVIDENCE"
     REJECTED:
       type: object
       required:
@@ -145,6 +203,8 @@ components:
               - "INCORRECT_INFORMATION"
               - "DUPLICATE_SUBMISSION"
               - "INCOMPLETE_SUBMISSION"
+        evidence:
+          $ref: "#/components/schemas/EVIDENCE"
     HOLD:
       type: object
       required:
@@ -164,6 +224,8 @@ components:
             type: string
             enum:
               - "AWAITING_FURTHER_INFORMATION"
+        evidence:
+          $ref: "#/components/schemas/EVIDENCE"
     PAYMENT_ALLOCATED:
       type: object
       required:
@@ -185,6 +247,8 @@ components:
               - "INVESTIGATION_CONCLUDED"
               - "OTHER_INFORMATION_NOT_PROVIDED_IN_RISK_OPINION"
               - "FURTHER_DETAILS_OF_ACCOUNT_ALLOCATED_TO"
+        evidence:
+          $ref: "#/components/schemas/EVIDENCE"
     PAYMENT_NOT_ALLOCATED:
       type: object
       required:
@@ -208,3 +272,5 @@ components:
               - "OTHER_INFORMATION_NOT_PROVIDED_IN_RISK_OPINION"
               - "AWAITING_FURTHER_INFORMATION"
               - "INVESTIGATION_CONCLUDED"
+        evidence:
+          $ref: "#/components/schemas/EVIDENCE"
