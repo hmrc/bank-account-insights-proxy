@@ -50,8 +50,8 @@ class AccessChecker @Inject()(config: Configuration) extends ExtendedServicesCon
       case _ =>
     }
 
-    req.headers.get(HeaderNames.USER_AGENT)
-      .flatMap(userAgent => userAgent.split(",").find(ua => ua != "bank-account-gateway"))
+    req.headers.getAll(HeaderNames.USER_AGENT).flatMap(_.split(","))
+      .find(ua => ua != "bank-account-gateway")
   }
 }
 
