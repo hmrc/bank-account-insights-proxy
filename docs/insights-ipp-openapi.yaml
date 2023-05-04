@@ -122,69 +122,196 @@ paths:
                                   lastSeen:
                                     type: string
                                     format: date-time
-                example:
-                  {
-                    "sortCode": "123456",
-                    "accountNumber": "12345678",
-                    "correlationId": "1234567-123456-1234567",
-                    "insights": {
-                      "risk": {
-                        "riskScore": 0,
-                        "reason": "ACCOUNT_NOT_ON_WATCH_LIST"
+              examples: {
+                {
+                  "sortCode": "123456",
+                  "accountNumber": "12345678",
+                  "correlationId": "1234567-123456-1234567",
+                  "insights": {
+                    "risk": {
+                      "riskScore": 0,
+                      "reason": "ACCOUNT_NOT_ON_WATCH_LIST"
+                    },
+                    "relationships": [
+                      {
+                        "attribute": "vrn",
+                        "count": 2,
+                        "attributeValues": [
+                          {
+                            "value": "AB153474/ASD",
+                            "numOfOccurrences": 4,
+                            "lastSeen": "2023-01-05 13:01:59.123"
+                          },
+                          {
+                            "value": "AB978474/ASC",
+                            "numOfOccurrences": 2,
+                            "lastSeen": "2023-01-13 17:01:31.111"
+                          }
+                        ]
                       },
-                      "relationships": [
-                        {
-                          "attribute": "vrn",
-                          "count": 2,
-                          "attributeValues": [
-                            {
-                              "value": "AB153474/ASD",
-                              "numOfOccurrences": 4,
-                              "lastSeen": "2023-01-05 13:01:59.123"
-                            },
-                            {
-                              "value": "AB978474/ASC",
-                              "numOfOccurrences": 2,
-                              "lastSeen": "2023-01-13 17:01:31.111"
-                            }
-                          ]
-                        },
-                        {
-                          "attribute": "ct_utr",
-                          "count": 1,
-                          "attributeValues": [
-                            {
-                              "value": "1341325909",
-                              "numOfOccurrences": 5,
-                              "lastSeen": "2023-01-05 13:01:59.123"
-                            }
-                          ]
-                        },
-                        {
-                          "attribute": "person_full_name",
-                          "count": 1,
-                          "attributeValues": [
-                            {
-                              "value": "John Smith",
-                              "numOfOccurrences": 5,
-                              "lastSeen": "2023-02-05 13:01:59.123"
-                            }
-                          ]
-                        },
-                        {
-                          "attribute": "agent_code",
-                          "count": 1,
-                          "attributeValues": [
-                            {
-                              "value": "FH73K1JE83HFW",
-                              "numOfOccurrences": 2,
-                              "lastSeen": "2023-03-05 13:01:59.123"
-                            }
-                          ]
-                        }
-                      ]
-                    }
+                      {
+                        "attribute": "ct_utr",
+                        "count": 1,
+                        "attributeValues": [
+                          {
+                            "value": "1341325909",
+                            "numOfOccurrences": 5,
+                            "lastSeen": "2023-01-05 13:01:59.123"
+                          }
+                        ]
+                      },
+                      {
+                        "attribute": "person_full_name",
+                        "count": 1,
+                        "attributeValues": [
+                          {
+                            "value": "John Smith",
+                            "numOfOccurrences": 5,
+                            "lastSeen": "2023-02-05 13:01:59.123"
+                          }
+                        ]
+                      },
+                      {
+                        "attribute": "agent_code",
+                        "count": 1,
+                        "attributeValues": [
+                          {
+                            "value": "FH73K1JE83HFW",
+                            "numOfOccurrences": 2,
+                            "lastSeen": "2023-03-05 13:01:59.123"
+                          }
+                        ]
+                      }
+                    ]
                   }
+                },
+                {
+                  "sortCode": "123456",
+                  "accountNumber": "12345678",
+                  "correlationId": "1234567-123456-1234567",
+                  "insights": {
+                    "risk": {
+                      "riskScore": 0,
+                      "reason": "ACCOUNT_NOT_ON_WATCH_LIST"
+                    },
+                    "relationships": [
+                      {
+                        "attribute": "vrn",
+                        "count": 2,
+                        "attributeValues": [
+                          {
+                            "value": "AB153474/ASD",
+                            "numOfOccurrences": 4,
+                            "lastSeen": "2023-01-05 13:01:59.123"
+                          },
+                          {
+                            "value": "AB978474/ASC",
+                            "numOfOccurrences": 2,
+                            "lastSeen": "2023-01-13 17:01:31.111"
+                          }
+                        ]
+                      },
+                      {
+                        "attribute": "ct_utr",
+                        "count": 2,
+                        "attributeValues": [
+                          {
+                            "value": "1341325909",
+                            "numOfOccurrences": 5,
+                            "lastSeen": "2023-01-05 13:01:59.123"
+                          },
+                          {
+                            "value": "1341325910",
+                            "numOfOccurrences": 2,
+                            "lastSeen": "2023-02-05 13:01:59.123"
+                          }
+                        ]
+                      },
+                      {
+                        "attribute": "agent_code",
+                        "count": 1,
+                        "attributeValues": [
+                          {
+                            "value": "AB129B564",
+                            "numOfOccurrences": 5,
+                            "lastSeen": "2023-01-05 13:01:59.123"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "sortCode": "123456",
+                  "accountNumber": "12345678",
+                  "correlationId": "1234567-123456-1234567",
+                  "insights": {
+                    "risk": {
+                      "riskScore": 0,
+                      "reason": "ACCOUNT_NOT_ON_WATCH_LIST"
+                    },
+                    "relationships": [
+                      {
+                        "attribute": "sa_utr",
+                        "count": 1,
+                        "attributeValues": [
+                          {
+                            "value": "1341325909",
+                            "numOfOccurrences": 5,
+                            "lastSeen": "2023-01-05 13:01:59.123"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "sortCode": "123456",
+                  "accountNumber": "12345678",
+                  "correlationId": "1234567-123456-1234567",
+                  "insights": {
+                    "risk": {
+                      "riskScore": 0,
+                      "reason": "ACCOUNT_NOT_ON_WATCH_LIST"
+                    },
+                    "relationships": [
+                      {
+                        "attribute": "ct_utr",
+                        "count": 1,
+                        "attributeValues": [
+                          {
+                            "value": "1341325909",
+                            "numOfOccurrences": 4,
+                            "lastSeen": "2023-01-05 13:01:59.123"
+                          }
+                        ]
+                      },
+                      {
+                        "attribute": "vrn",
+                        "count": 1,
+                        "attributeValues": [
+                          {
+                            "value": "AB153474/ASD",
+                            "numOfOccurrences": 4,
+                            "lastSeen": "2023-01-05 13:01:59.123"
+                          }
+                        ]
+                      },
+                      {
+                        "attribute": "paye_ref",
+                        "count": 1,
+                        "attributeValues": [
+                          {
+                            "value": "1341325909",
+                            "numOfOccurrences": 5,
+                            "lastSeen": "2023-01-05 13:01:59.123"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
         '3XX':
           description: |
             The request has been redirected. Clients should follow the redirect using the location header as per the HTTP specification.
