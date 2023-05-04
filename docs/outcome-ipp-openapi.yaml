@@ -56,7 +56,7 @@ paths:
                     - $ref: "#/components/schemas/HOLD"
                     - $ref: "#/components/schemas/PAYMENT_ALLOCATED"
                     - $ref: "#/components/schemas/PAYMENT_NOT_ALLOCATED"
-            example:
+            examples: {
               {
                 "correlationId": "33df37a4-a535-41fe-8032-7ab718b45526",
                 "submitter": "ipp", //Unnecessary??
@@ -78,7 +78,30 @@ paths:
                     "user_id": "0123456789112345" //eg government gateway id of the end user - possibly an object type to hold type of used id
                   }
                 }
+              },
+              {
+                "correlationId": "33df37a4-a535-41fe-8032-7ab718b45526",
+                "submitter": "ipp",
+                "submission": {
+                  "submissionType": "bank-account",
+                  "submissionAttribute": {
+                    "sortCode": "608581",
+                    "accountNumber": "49835625"
+                  }
+                },
+                "outcome": {
+                  "outcomeType": "PAYMENT_ALLOCATION",
+                  "decision": "PAYMENT_ALLOCATED",
+                  "reasons": "account allocated to details",
+                  "evidence": {
+                    "ct_utr": "0123456789",
+                    "agent_code": "ABC1234567ZX",
+                    "user_id": "0123456789112345",
+                    "vrn": "GB123456789"
+                  }
+                }
               }
+            }
       responses:
         '200':
           description: |
@@ -132,6 +155,9 @@ components:
               pattern: '([0-9]+){8}'
     EVIDENCE:
       type: object
+      description: |
+        An object the contains attribute to value mappings that were helpful in working the case. 
+        The attributes are restricted to ct_utr, paye_ref, sa_utr, user_id, vrn, person_full_name, agent_code.
     ACCEPTED:
       type: object
       required:
