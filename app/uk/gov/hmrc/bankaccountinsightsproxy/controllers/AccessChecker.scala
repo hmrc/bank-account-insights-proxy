@@ -35,23 +35,22 @@ class AccessChecker @Inject()(config: Configuration) extends ExtendedServicesCon
   private val allowedClients: Set[String] = getStringSeq(accessControlAllowListKey,
     if (checkAllowList) throw new RuntimeException(s"Could not find config $accessControlAllowListAbsoluteKey") else Seq()).toSet
 
-  def isClientAllowed(client: Option[String]): Boolean =
-    !checkAllowList || client.fold(false)(allowedClients.contains)
+  def areClientsAllowed(clients: Seq[String]): Boolean =
+    !checkAllowList || clients.forall(allowedClients.contains)
 
-  def forbiddenResponse(client: Option[String]): String =
+  def forbiddenResponse(clients: Seq[String]): String =
     s"""{
        |"code": 403,
-       |"description": "'${client.getOrElse("Unknown Client")}' is not authorized to use this service. Please complete '${accessRequestFormUrl}' to request access."
+       |"description": "One or more user agents in '${clients.mkString(",")}' are not authorized to use this service. Please complete '${accessRequestFormUrl}' to request access."
        |}""".stripMargin
 
-  def getClientFromUserAgent[T](req: Request[T]): Option[String] = {
-    req.headers.get("OriginatorId") match {
-      case Some(oId) => logger.warn(s"An OriginatorId was provided: $oId")
-      case _ =>
-    }
+  def getClientsFromRequest[T](req: Request[T]): Seq[String] = {
+    val originator = req.headers.get("OriginatorId")
 
-    req.headers.getAll(HeaderNames.USER_AGENT).flatMap(_.split(","))
-      .find(ua => ua != "bank-account-gateway")
+    if (originator.isDefined)
+      Seq(originator.get)
+    else
+      req.headers.getAll(HeaderNames.USER_AGENT).flatMap(_.split(","))
   }
 }
 

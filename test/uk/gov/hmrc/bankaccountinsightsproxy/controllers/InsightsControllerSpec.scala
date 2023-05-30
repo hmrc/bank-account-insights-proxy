@@ -48,6 +48,7 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
     .configure("microservice.services.bank-account-insights.authToken" -> authToken)
     .configure("microservice.services.access-control.enabled" -> true)
     .configure("microservice.services.access-control.allow-list.0" -> "example-service")
+    .configure("microservice.services.access-control.allow-list.1" -> "proxy-service")
     .overrides(bind[ControllerComponents].toInstance(controllerComponents))
     .build()
 
@@ -55,61 +56,159 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
   implicit val mat: Materializer = app.injector.instanceOf[Materializer]
 
   "POST /check/insights" when {
+    val path = "/check/insights"
+    val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
+    val response =
+      """{
+        |  "score": "100",
+        |  "reason": "ACCOUNT_ON_WATCH_LIST",
+        |  "correlationId": "12345-12345-12345-12345"
+        |}""".stripMargin
+
     "the user-agent is on the allow list" should {
       val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "example-service", "Content-Type" -> "application/json")
-      val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
-      val response =
-        """{
-          |  "score": "100",
-          |  "reason": "ACCOUNT_ON_WATCH_LIST",
-          |  "correlationId": "12345-12345-12345-12345"
-          |}""".stripMargin
 
-      behave like downstreamConnectorEndpoint("/check/insights", response) { () =>
-        controller.checkInsights()(
-          FakeRequest("POST", "/check/insights").withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+      behave like downstreamConnectorEndpoint(path, response) { () =>
+        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+      }
+    }
+
+    "there are multiple user-agents all of which are present on the allow list" should {
+      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "proxy-service", "User-Agent" -> "example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+
+      behave like downstreamConnectorEndpoint(path, response) { () =>
+        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+      }
+    }
+
+    "there is a comma separated user-agent and all components of it are present on the allow list" should {
+      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "proxy-service,example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+
+      behave like downstreamConnectorEndpoint(path, response) { () =>
+        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
       }
     }
 
     "the user-agent is NOT on the allow list" should {
       "return forbidden" in {
         val headers = Seq("True-Calling-Client" -> "another-service", "User-Agent" -> "another-service", "Content-Type" -> "application/json")
-        val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
-
-        val result = controller.checkInsights()(
-          FakeRequest("POST", "/check/insights").withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
 
         status(result) shouldBe Status.FORBIDDEN
+      }
+    }
+
+    "there are multiple user-agents but none are on the allow list" should {
+      "return forbidden" in {
+        val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "another-service", "User-Agent" -> "more-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+
+        status(result) shouldBe Status.FORBIDDEN
+      }
+    }
+
+    "there is a comma separated user-agent but only one of it's components are on the allow list" should {
+      "return forbidden" in {
+        val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "proxy-service,another-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+
+        status(result) shouldBe Status.FORBIDDEN
+      }
+    }
+
+    "there is a comma separated user-agent but none of it's component are on the allow list" should {
+      "return forbidden" in {
+        val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "another-service,more-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+
+        status(result) shouldBe Status.FORBIDDEN
+      }
+    }
+
+    "there is an originator id in the request which matches a value on the allow list, but the user-agent does not" should {
+      val headers = Seq("True-Calling-Client" -> "example-service", "OriginatorId" -> "example-service", "User-Agent" -> "invalid-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+
+      behave like downstreamConnectorEndpoint(path, response) { () =>
+        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
       }
     }
   }
 
   "POST /ipp" when {
-    "Given a valid internal auth token" should {
-      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
-      val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
-      val response =
-        """{
-          |  "score": "100",
-          |  "reason": "ACCOUNT_ON_WATCH_LIST",
-          |  "correlationId": "12345-12345-12345-12345"
-          |}""".stripMargin
+    val path = "/ipp"
+    val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
+    val response =
+      """{
+        |  "score": "100",
+        |  "reason": "ACCOUNT_ON_WATCH_LIST",
+        |  "correlationId": "12345-12345-12345-12345"
+        |}""".stripMargin
 
-      behave like downstreamConnectorEndpoint("/ipp", response) { () =>
-        controller.ipp()(
-          FakeRequest("POST", "/ipp").withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+    "the user-agent is on the allow list" should {
+      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "example-service", "Content-Type" -> "application/json")
+
+      behave like downstreamConnectorEndpoint(path, response) { () =>
+        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+      }
+    }
+
+    "there are multiple user-agents all of which are present on the allow list" should {
+      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "proxy-service", "User-Agent" -> "example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+
+      behave like downstreamConnectorEndpoint(path, response) { () =>
+        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+      }
+    }
+
+    "there is a comma separated user-agent and all components of it are present on the allow list" should {
+      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "proxy-service,example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+
+      behave like downstreamConnectorEndpoint(path, response) { () =>
+        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
       }
     }
 
     "the user-agent is NOT on the allow list" should {
       "return forbidden" in {
         val headers = Seq("True-Calling-Client" -> "another-service", "User-Agent" -> "another-service", "Content-Type" -> "application/json")
-        val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
-
-        val result = controller.ipp()(
-          FakeRequest("POST", "/ipp").withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
 
         status(result) shouldBe Status.FORBIDDEN
+      }
+    }
+
+    "there are multiple user-agents but none are on the allow list" should {
+      "return forbidden" in {
+        val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "another-service", "User-Agent" -> "more-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+
+        status(result) shouldBe Status.FORBIDDEN
+      }
+    }
+
+    "there is a comma separated user-agent but only one of it's components are on the allow list" should {
+      "return forbidden" in {
+        val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "proxy-service,another-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+
+        status(result) shouldBe Status.FORBIDDEN
+      }
+    }
+
+    "there is a comma separated user-agent but none of it's component are on the allow list" should {
+      "return forbidden" in {
+        val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "another-service,more-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+
+        status(result) shouldBe Status.FORBIDDEN
+      }
+    }
+
+    "there is an originator id in the request which matches a value on the allow list, but the user-agent does not" should {
+      val headers = Seq("True-Calling-Client" -> "example-service", "OriginatorId" -> "example-service", "User-Agent" -> "invalid-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+
+      behave like downstreamConnectorEndpoint(path, response) { () =>
+        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
       }
     }
   }

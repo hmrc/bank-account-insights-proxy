@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.bankaccountinsightsproxy.controllers
 
+import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
 import uk.gov.hmrc.bankaccountinsightsproxy.config.AppConfig
@@ -33,21 +34,27 @@ class InsightsController @Inject()(connector: DownstreamConnector,
                                   )(implicit ec: ExecutionContext)
   extends BackendController(cc) {
 
+  private val logger = Logger(this.getClass.getSimpleName)
+
+  private def url(path: String) = s"${config.bankAccountInsightsBaseUrl}$path"
+
   def checkInsights: Action[AnyContent] = forwardIfAllowed()
 
   def ipp: Action[AnyContent] = forwardIfAllowed()
 
   private def forwardIfAllowed() = Action.async(parse.anyContent) {
-      implicit request: Request[AnyContent] =>
+    implicit request: Request[AnyContent] =>
 
-        val callingClient = clientAllowListChecker.getClientFromUserAgent(request)
-        if (!clientAllowListChecker.isClientAllowed(callingClient)) Future.successful {
-          Forbidden(Json.parse(clientAllowListChecker.forbiddenResponse(callingClient)))
-        } else {
-          val path = request.target.uri.toString
-          val url = s"${config.bankAccountInsightsBaseUrl}$path"
+      val callingClients = clientAllowListChecker.getClientsFromRequest(request)
+      if (!clientAllowListChecker.areClientsAllowed(callingClients)) Future.successful {
+        Forbidden(Json.parse(clientAllowListChecker.forbiddenResponse(callingClients)))
+      } else {
+        connector.forward(request, url(request.target.uri.toString), config.bankAccountInsightsAuthToken)
+      }
+  }
 
-          connector.forward(request, url, config.bankAccountInsightsAuthToken)
-        }
-    }
+  connector.checkConnectivity(url("/check/insights"), config.bankAccountInsightsAuthToken).map {
+    case true => logger.warn("Downstream connectivity to insights service successfully established")
+    case _ => logger.error("Downstream connectivity check to insights service FAILED")
+  }
 }
