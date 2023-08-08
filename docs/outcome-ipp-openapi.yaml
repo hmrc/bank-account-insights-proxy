@@ -1,13 +1,13 @@
 openapi: 3.0.3
 info:
   title: Report action in response to provided insights.
-  version: 1.0.0
-  description: This API provides the ability for IPP to report action taken in response to insights provided.
+  version: 1.0.1
+  description: This API enables services to report action taken in response to insights provided.
 paths:
   /report/outcome:
     post:
-      summary: Bank account insights outcome auditing
-      description: Enables the reporting of outcomes to audit Bank Account Insights. Report action taken in response to insights provided for the given Bank Account.
+      summary: Insights outcome auditing
+      description: Enables the reporting of outcomes to audit Insights. Report action taken in response to insights provided for a given attribute.
       parameters:
         - in: header
           required: true
@@ -26,7 +26,7 @@ paths:
             pattern: '.+'
             example: 6d5731a4-c927-4107-b81f-eb88288bf5c9
       requestBody:
-        description: Description of outcome achieved based on insighs provided
+        description: Description of outcome achieved based on insights provided
         required: true
         content:
           'application/json':
@@ -54,52 +54,43 @@ paths:
                     - $ref: "#/components/schemas/REJECTED"
                     - $ref: "#/components/schemas/HOLD"
                     - $ref: "#/components/schemas/PAYMENT_ALLOCATED"
-            examples: {
-              {
-                "correlationId": "33df37a4-a535-41fe-8032-7ab718b45526",
-                "submitter": "ipp", 
-                "submission": {
-                  "submissionType": "bank-account",
-                  "submissionAttribute": {
-                    "sortCode": "608580",
-                    "accountNumber": "48835625"
-                  }
-                },
-                "outcome": {
-                  "outcomeType": "payment-allocation",
-                  "decision": "PAYMENT_ALLOCATED",
-                  "reasons": "account allocated to details",
-                  "evidence": {  
-                    "sa_utr": "0123456789",
-                    "paye_ref": "ABC/A1234",
-                    "full_name": "Jane Smith",
-                    "user_id": "0123456789112345" 
-                  }
-                }
-              },
-              {
-                "correlationId": "33df37a4-a535-41fe-8032-7ab718b45526",
-                "submitter": "ipp",
-                "submission": {
-                  "submissionType": "bank-account",
-                  "submissionAttribute": {
-                    "sortCode": "608581",
-                    "accountNumber": "49835625"
-                  }
-                },
-                "outcome": {
-                  "outcomeType": "payment-allocation",
-                  "decision": "PAYMENT_ALLOCATED",
-                  "reasons": "account allocated to details",
-                  "evidence": {
-                    "ct_utr": "0123456789",
-                    "agent_code": "ABC1234567ZX",
-                    "user_id": "0123456789112345",
-                    "vrn": "GB123456789"
-                  }
-                }
-              }
-            }
+            examples:
+              example1:
+                value:
+                  correlationId: 33df37a4-a535-41fe-8032-7ab718b45526
+                  submitter: ipp
+                  submission:
+                    submissionType: bank-account
+                    submissionAttribute:
+                      sortCode: 608580
+                      accountNumber: 48835625
+                  outcome:
+                    outcomeType: payment-allocation
+                    decision: PAYMENT_ALLOCATED
+                    reasons: FURTHER_DETAILS_OF_ACCOUNT_ALLOCATED_TO
+                    evidence:
+                      sa_utr: 0123456789
+                      paye_ref: ABC/A1234
+                      full_name: Jane Smith
+                      user_id: 0123456789112345
+              example2:
+                value:
+                  correlationId: 33df37a4-a535-41fe-803-7ab718b45526
+                  submitter: ipp
+                  submission:
+                    submissionType: bank-account
+                    submissionAttribute:
+                      sortCode: 608581
+                      accountNumber: 49835625
+                  outcome:
+                    outcomeType: payment-allocation
+                    decision: PAYMENT_ALLOCATED
+                    reasons: FURTHER_DETAILS_OF_ACCOUNT_ALLOCATED_TO
+                    evidence:
+                      ct_utr: 0123456789
+                      agent_code: ABC1234567ZX
+                      user_id: 0123456789112345
+                      vrn: GB123456789
       responses:
         '200':
           description: |
@@ -127,7 +118,7 @@ components:
           properties:
             nino:
               type: string
-              pattern: "[A-Za-z&&[^DFIQUdfiqu]][A-Za-z&&[^DFIQUOdfiquo]]\p{Digit}{6}[ABCDabcd]?"
+              pattern: ^[A-Z]{2}[0-9]{6}[A-Z]{1}$
     BANK_ACCOUNT_SUBMISSION:
       type: object
       properties:
@@ -268,8 +259,6 @@ components:
           items:
             type: string
             enum:
-              - "INVESTIGATION_CONCLUDED"
-              - "OTHER_INFORMATION_NOT_PROVIDED_IN_RISK_OPINION"
               - "FURTHER_DETAILS_OF_ACCOUNT_ALLOCATED_TO"
         evidence:
           $ref: "#/components/schemas/EVIDENCE"
