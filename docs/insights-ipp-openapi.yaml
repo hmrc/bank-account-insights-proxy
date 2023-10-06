@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
   title: Retrieve bank account insights for IPP.
-  version: 1.0.3
+  version: 1.0.3.1
   description: This API provides the ability for IPP to retrieve insights from the HMRC Customer Insights Platform for a given bank account and sort code.
 paths:
-  /check/insights:
+  /bank-account-insights/check/insights:
     post:
       summary: Bank Account insights
       description: |
