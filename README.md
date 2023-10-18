@@ -18,9 +18,9 @@ Consumer facing documentation for all `bank-account` attribute services - includ
 
 ## Contact
 
-Our preferred contact method is our public channel in HMRC Digital Slack: `#team-cip-attribute-reputation`
+Our preferred contact method is our public channel in HMRC Digital Slack: `#team-cip-insights-and-reputation`
 
-If you do not have access to Slack, please email us at `cip-attribute-reputation-g@digital.hmrc.gov.uk`
+If you do not have access to Slack, please email us at `cip-insights-and-reputation-g@digital.hmrc.gov.uk`
 
 ## License
 
