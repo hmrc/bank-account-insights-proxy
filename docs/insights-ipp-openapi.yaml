@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Retrieve bank account insights for IPP.
-  version: 1.0.3.2
+  version: 1.0.3.3
   description: This API provides the ability for IPP to retrieve insights from the HMRC Customer Insights Platform for a given bank account and sort code.
 paths:
   /bank-account-insights/ipp:
@@ -123,7 +123,7 @@ paths:
                                     type: string
                                     format: date-time
               examples:
-                example1:
+                business_with_person_fullname:
                     value:
                       sortCode: "123456"
                       accountNumber: "12345678"
@@ -138,29 +138,29 @@ paths:
                             attributeValues:
                               - value: AB153474/ASD
                                 numOfOccurrences: 4
-                                lastSeen: "2023-01-05 13:01:59.123"
+                                lastSeen: "2023-01-05T13:01:59.123Z"
                               - value: AB978474/ASC
                                 numOfOccurrences: 2
-                                lastSeen: "2023-01-13 17:01:31.111"
+                                lastSeen: "2023-01-13T17:01:31.111Z"
                           - attribute: ct_utr
                             count: 1
                             attributeValues:
                               - value: "1341325909"
                                 numOfOccurrences: 5
-                                lastSeen: "2023-01-05 13:01:59.123"
+                                lastSeen: "2023-01-05T13:01:59.123Z"
                           - attribute: person_full_name
                             count: 1
                             attributeValues:
                               - value: John Smith
                                 numOfOccurrences: 5
-                                lastSeen: "2023-02-05 13:01:59.123"
+                                lastSeen: "2023-02-05T13:01:59.123Z"
                           - attribute: agent_code
                             count: 1
                             attributeValues:
                               - value: FH73K1JE83HFW
                                 numOfOccurrences: 2
-                                lastSeen: "2023-03-05 13:01:59.123"
-                example2:
+                                lastSeen: "2023-03-05T13:01:59.123Z"
+                business:
                   value:
                     sortCode: "123456"
                     accountNumber: "12345678"
@@ -175,26 +175,26 @@ paths:
                           attributeValues:
                             - value: AB153474/ASD
                               numOfOccurrences: 4
-                              lastSeen: "2023-01-05 13:01:59.123"
+                              lastSeen: "2023-01-05T13:01:59.123Z"
                             - value: AB978474/ASC
                               numOfOccurrences: 2
-                              lastSeen: "2023-01-13 17:01:31.111"
+                              lastSeen: "2023-01-13T17:01:31.111Z"
                         - attribute: ct_utr
                           count: 2
                           attributeValues:
                             - value: "1341325909"
                               numOfOccurrences: 5
-                              lastSeen: "2023-01-05 13:01:59.123"
+                              lastSeen: "2023-01-05T13:01:59.123Z"
                             - value: "1341325910"
                               numOfOccurrences: 2
-                              lastSeen: "2023-02-05 13:01:59.123"
+                              lastSeen: "2023-02-05T13:01:59.123Z"
                         - attribute: agent_code
                           count: 1
                           attributeValues:
                             - value: AB129B564
                               numOfOccurrences: 5
-                              lastSeen: "2023-01-05 13:01:59.123"
-                example3:
+                              lastSeen: "2023-01-05T13:01:59.123Z"
+                single_relationship:
                   value:
                     sortCode: "123456"
                     accountNumber: "12345678"
@@ -209,8 +209,8 @@ paths:
                           attributeValues:
                             - value: "1341325909"
                               numOfOccurrences: 5
-                              lastSeen: "2023-01-05 13:01:59.123"
-                example4:
+                              lastSeen: "2023-01-05T13:01:59.123Z"
+                vtn_with_paye_ref:
                   value:
                     sortCode: "123456"
                     accountNumber: "12345678"
@@ -225,19 +225,19 @@ paths:
                           attributeValues:
                             - value: "1341325909"
                               numOfOccurrences: 4
-                              lastSeen: "2023-01-05 13:01:59.123"
+                              lastSeen: "2023-01-05T13:01:59.123Z"
                         - attribute: vrn
                           count: 1
                           attributeValues:
                             - value: AB153474/ASD
                               numOfOccurrences: 4
-                              lastSeen: "2023-01-05 13:01:59.123"
+                              lastSeen: "2023-01-05T13:01:59.123Z"
                         - attribute: paye_ref
                           count: 1
                           attributeValues:
                             - value: "1341325909"
                               numOfOccurrences: 5
-                              lastSeen: "2023-01-05 13:01:59.123"
+                              lastSeen: "2023-01-05T13:01:59.123Z"
         '3XX':
           description: |
             The request has been redirected. Clients should follow the redirect using the location header as per the HTTP specification.
