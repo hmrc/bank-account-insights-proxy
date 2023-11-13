@@ -30,11 +30,11 @@ paths:
         description: Account Details
         required: true
         content:
-          'application/json':
+          application/json:
             schema:
               type: object
               required:
-                - sortcode
+                - sortCode
                 - accountNumber
               properties:
                 sortCode:
@@ -54,7 +54,7 @@ paths:
                   "accountNumber": "12345678"
                 }
       responses:
-        '200':
+        200:
           description: IPP. The response could be an empty document ('{}') if CIP have not seen the bank account details before.
           headers: { }
           content:
@@ -238,10 +238,10 @@ paths:
                             - value: "1341325909"
                               numOfOccurrences: 5
                               lastSeen: "2023-01-05T13:01:59.123Z"
-        '3XX':
+        3XX:
           description: |
             The request has been redirected. Clients should follow the redirect using the location header as per the HTTP specification.
-        '400':
+        400:
           description: |
             The request was invalid, e.g the account number or sort code was not well formed.
           content:
@@ -268,6 +268,6 @@ paths:
                     "code": "INVALID_ACCOUNT_NUMBER",
                     "desc": "A badly formatted, or missing account number."
                   }
-        '5XX':
+        5XX:
           description: |
             An unexpected server error occurred when processing the request. These are usually temporary and consumers should try again.
