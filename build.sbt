@@ -1,10 +1,11 @@
-import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
+import uk.gov.hmrc.DefaultBuildSettings
+
+ThisBuild / scalaVersion        := "2.13.12"
+ThisBuild / majorVersion        := 0
 
 lazy val microservice = Project("bank-account-insights-proxy", file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin, BuildInfoPlugin)
   .settings(
-    majorVersion        := 0,
-    scalaVersion        := "2.13.8",
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
     // suppress warnings in generated routes files
@@ -14,8 +15,14 @@ lazy val microservice = Project("bank-account-insights-proxy", file("."))
     buildInfoKeys := Seq[BuildInfoKey](version),
     buildInfoPackage := "buildinfo"
   )
-  .configs(IntegrationTest)
-  .settings(integrationTestSettings(): _*)
+  .settings(PlayKeys.playDefaultPort := 9865)
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings: _*)
-  .settings(PlayKeys.playDefaultPort := 9865)
+
+lazy val it = project.in(file("it"))
+  .enablePlugins(play.sbt.PlayScala)
+  .dependsOn(microservice % "test->test")
+  .settings(DefaultBuildSettings.itSettings)
+  .settings(
+    libraryDependencies ++= AppDependencies.itTest
+  )

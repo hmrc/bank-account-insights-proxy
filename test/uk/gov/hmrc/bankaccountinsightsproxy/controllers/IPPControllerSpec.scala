@@ -32,7 +32,7 @@
 //
 //package uk.gov.hmrc.bankaccountinsightsproxy.controllers
 //
-//import akka.stream.Materializer
+//import org.apache.pekko.stream.Materializer
 //import com.codahale.metrics.SharedMetricRegistries
 //import org.mockito.ArgumentMatchers.any
 //import org.mockito.Mockito.when

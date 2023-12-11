@@ -3,5 +3,3 @@
 ->         /                              health.Routes
 ->         /                              app.Routes
 ->         /bank-account-insights         app.Routes
-
-GET        /admin/metrics                 com.kenshoo.play.metrics.MetricsController.metrics
