@@ -76,7 +76,7 @@ class CIRJsonErrorHandler @Inject()(
                  | invalidJson()
                  | jsonValidationError()
                  | booleanParsingError()
-                 | missingParameterError()                  => "invalid json"
+                 | missingParameterError()                  => "bad request, cause: invalid json"
             case characterParseError(toBeRedacted)        => input.replace(toBeRedacted, "REDACTED")
             case parameterParseError(toBeRedacted)        => input.replace(toBeRedacted, "REDACTED")
             case _                                        => "bad request, cause: REDACTED"
