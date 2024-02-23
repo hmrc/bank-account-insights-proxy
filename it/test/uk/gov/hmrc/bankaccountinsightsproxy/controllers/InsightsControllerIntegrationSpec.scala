@@ -92,7 +92,7 @@ class InsightsControllerIntegrationSpec
         response.status shouldBe BAD_REQUEST
         val responseBodyJs = response.body[JsValue]
         (responseBodyJs \ "statusCode").as[Int] shouldBe BAD_REQUEST
-        (responseBodyJs \ "message").as[String] shouldBe "invalid json"
+        (responseBodyJs \ "message").as[String] shouldBe "bad request, cause: invalid json"
       }
 
       "invalid json payload is provided to the /ipp endpoint" in {
@@ -104,7 +104,7 @@ class InsightsControllerIntegrationSpec
         response.status shouldBe BAD_REQUEST
         val responseBodyJs = response.body[JsValue]
         (responseBodyJs \ "statusCode").as[Int] shouldBe BAD_REQUEST
-        (responseBodyJs \ "message").as[String] shouldBe "invalid json"
+        (responseBodyJs \ "message").as[String] shouldBe "bad request, cause: invalid json"
       }
     }
   }
