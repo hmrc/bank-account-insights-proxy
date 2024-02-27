@@ -17,12 +17,12 @@
 package uk.gov.hmrc.bankaccountinsightsproxy.connectors
 
 import play.api.Logger
-import play.api.http.HeaderNames._
-import play.api.http.{HttpEntity, MimeTypes}
+import play.api.http.HeaderNames.{AUTHORIZATION, CONTENT_TYPE, CONTENT_LENGTH, HOST}
+import play.api.http.{HeaderNames, HttpEntity, MimeTypes}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Results.{BadGateway, InternalServerError, MethodNotAllowed}
 import play.api.mvc.{AnyContent, Request, ResponseHeader, Result}
-import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,7 +38,7 @@ class DownstreamConnector @Inject()(httpClient: HttpClient) {
     (request.method, request.headers(CONTENT_TYPE).toLowerCase()) match {
       case ("POST", "application/json") =>
         val onwardHeaders = request.headers.remove(CONTENT_LENGTH, HOST, AUTHORIZATION).headers
-        implicit val hc: HeaderCarrier = HeaderCarrier(authorization = Some(Authorization(authToken)))
+        implicit val hc: HeaderCarrier = DownstreamConnector.overrideHeaderCarrier(authToken)
 
         try {
           httpClient.POST[Option[JsValue], HttpResponse](url = url, body = request.body.asJson, onwardHeaders)
@@ -65,7 +65,7 @@ class DownstreamConnector @Inject()(httpClient: HttpClient) {
 
   def checkConnectivity(url: String, authToken: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-    implicit val hc: HeaderCarrier = HeaderCarrier(authorization = Some(Authorization(authToken)))
+    implicit val hc: HeaderCarrier = DownstreamConnector.overrideHeaderCarrier(authToken)
 
     try {
       httpClient.POST[Option[JsValue], HttpResponse](url = url, body = Some(Json.parse("{}"))).map {
@@ -79,5 +79,11 @@ class DownstreamConnector @Inject()(httpClient: HttpClient) {
     catch {
       case t: Throwable => Future.successful(false)
     }
+  }
+}
+
+object DownstreamConnector {
+  def overrideHeaderCarrier(authToken: String): HeaderCarrier = {
+    HeaderCarrier(extraHeaders = Seq(HeaderNames.AUTHORIZATION -> authToken))
   }
 }
