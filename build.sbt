@@ -1,7 +1,7 @@
 import uk.gov.hmrc.DefaultBuildSettings
 
-ThisBuild / scalaVersion        := "2.13.12"
-ThisBuild / majorVersion        := 0
+ThisBuild / scalaVersion := "3.3.3"
+ThisBuild / majorVersion := 0
 
 lazy val microservice = Project("bank-account-insights-proxy", file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin, BuildInfoPlugin)
@@ -17,7 +17,8 @@ lazy val microservice = Project("bank-account-insights-proxy", file("."))
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings)
 
-lazy val it = project.in(file("it"))
+lazy val it = project
+  .in(file("it"))
   .enablePlugins(play.sbt.PlayScala)
   .dependsOn(microservice % "test->test")
   .settings(DefaultBuildSettings.itSettings())

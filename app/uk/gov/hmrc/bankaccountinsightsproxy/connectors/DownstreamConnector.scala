@@ -17,12 +17,12 @@
 package uk.gov.hmrc.bankaccountinsightsproxy.connectors
 
 import play.api.Logger
-import play.api.http.HeaderNames.{AUTHORIZATION, CONTENT_TYPE, CONTENT_LENGTH, HOST}
+import play.api.http.HeaderNames.{AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, HOST}
 import play.api.http.{HeaderNames, HttpEntity, MimeTypes}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Results.{BadGateway, InternalServerError, MethodNotAllowed}
 import play.api.mvc.{AnyContent, Request, ResponseHeader, Result}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, StringContextOps}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,7 +42,7 @@ class DownstreamConnector @Inject()(httpClient: HttpClient) {
 
         try {
           httpClient.POST[Option[JsValue], HttpResponse](url = url, body = request.body.asJson, onwardHeaders)
-            .map { response: HttpResponse =>
+            .map { response =>
               val returnHeaders = response.headers
                 .filterNot { case (n, _) => n == CONTENT_TYPE || n == CONTENT_LENGTH }
                 .view.mapValues(x => x.mkString).toMap
@@ -68,7 +68,7 @@ class DownstreamConnector @Inject()(httpClient: HttpClient) {
     implicit val hc: HeaderCarrier = DownstreamConnector.overrideHeaderCarrier(authToken)
 
     try {
-      httpClient.POST[Option[JsValue], HttpResponse](url = url, body = Some(Json.parse("{}"))).map {
+      httpClient.POST[Option[JsValue], HttpResponse](url = url"$url", body = Some(Json.parse("{}"))).map {
         case response if response.status > 400 => false
         case response if response.status / 100 == 5 => false
         case _ => true

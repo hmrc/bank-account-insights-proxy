@@ -16,23 +16,24 @@
 
 package uk.gov.hmrc.bankaccountinsightsproxy.controllers
 
-import org.mockito.ArgumentMatchers.{eq => meq, _}
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers.{eq as meq, *}
+import org.mockito.Mockito.*
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import play.api._
+import play.api.*
 import play.api.http.HeaderNames
-import play.api.inject._
+import play.api.inject.*
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.JsValue
 import play.api.libs.ws.WSClient
-import play.api.mvc.Results._
-import play.api.test.Helpers._
-import uk.gov.hmrc.bankaccountinsightsproxy.connectors.DownstreamConnector
-
+import play.api.mvc.Results.*
+import play.api.test.Helpers.*
+import uk.gov.hmrc.bankaccountinsightsproxy.connectors.*
+import play.api.libs.ws.DefaultBodyWritables.*
+import play.api.libs.ws.JsonBodyReadables.*
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
