@@ -22,9 +22,7 @@ import play.api.{Configuration, Environment}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class Module(environment: Environment, playConfig: Configuration) extends AbstractModule {
+class Module(environment: Environment, playConfig: Configuration) extends AbstractModule:
 
-  override def configure(): Unit = {
+  override def configure(): Unit =
     bind(classOf[AppConfig]).asEagerSingleton()
-  }
-}

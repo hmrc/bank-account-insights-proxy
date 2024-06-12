@@ -32,7 +32,7 @@ class InsightsController @Inject()(connector: DownstreamConnector,
                                    clientAllowListChecker: AccessChecker,
                                    cc: ControllerComponents
                                   )(implicit ec: ExecutionContext)
-  extends BackendController(cc) {
+  extends BackendController(cc):
 
   private val logger = Logger(this.getClass.getSimpleName)
 
@@ -42,19 +42,16 @@ class InsightsController @Inject()(connector: DownstreamConnector,
 
   def ipp: Action[AnyContent] = forwardIfAllowed()
 
-  private def forwardIfAllowed() = Action.async(parse.anyContent) {
+  private def forwardIfAllowed() = Action.async(parse.anyContent):
     implicit request: Request[AnyContent] =>
-
       val callingClients = clientAllowListChecker.getClientsFromRequest(request)
-      if (!clientAllowListChecker.areClientsAllowed(callingClients)) Future.successful {
-        Forbidden(Json.parse(clientAllowListChecker.forbiddenResponse(callingClients)))
-      } else {
+      if !clientAllowListChecker.areClientsAllowed(callingClients) then
+        Future.successful {Forbidden(Json.parse(clientAllowListChecker.forbiddenResponse(callingClients)))}
+      else
         connector.forward(request, url(request.target.uri.toString), config.bankAccountInsightsAuthToken)
-      }
-  }
 
-  connector.checkConnectivity(url("/check/insights"), config.bankAccountInsightsAuthToken).map {
-    case true => logger.warn("Downstream connectivity to insights service successfully established")
-    case _ => logger.error("Downstream connectivity check to insights service FAILED")
-  }
-}
+  connector
+    .checkConnectivity(url("/check/insights"), config.bankAccountInsightsAuthToken)
+    .map:
+      case true => logger.warn("Downstream connectivity to insights service successfully established")
+      case _ => logger.error("Downstream connectivity check to insights service FAILED")

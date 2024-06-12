@@ -25,10 +25,10 @@ import play.api.http.Status
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.mvc.Results._
+import play.api.mvc.Results.*
 import play.api.mvc.{ControllerComponents, Result}
-import play.api.routing.sird.{POST => SPOST}
-import play.api.test.Helpers._
+import play.api.routing.sird.POST as SPOST
+import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import play.core.server.{Server, ServerConfig}
 import uk.gov.hmrc.bankaccountinsightsproxy.config.AppConfig
@@ -37,7 +37,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 
-class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
+class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite:
   val insightsPort = 11222
   val authToken = "test-token"
 
@@ -214,7 +214,7 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
   }
 
   def downstreamConnectorEndpoint(url: String, response: String)(invoke: () => Future[Result]): Unit = {
-    "forward a 200 response from the downstream service" in {
+    "forward a 200 response from the downstream service" in:
 
       Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) { components =>
         import components.{defaultActionBuilder => Action}
@@ -230,9 +230,8 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
         status(result) shouldBe Status.OK
         contentAsString(result) shouldBe response
       }
-    }
 
-    "forward a 400 response from the downstream service" in {
+    "forward a 400 response from the downstream service" in:
       val errorResponse = """{"code": "MALFORMED_JSON", "path.missing: Subject"}""".stripMargin
 
       Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) { components =>
@@ -246,9 +245,8 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
         status(result) shouldBe Status.BAD_REQUEST
         contentAsString(result) shouldBe errorResponse
       }
-    }
 
-    "handle a malformed json payload" in {
+    "handle a malformed json payload" in:
       val errorResponse = """{"code": "MALFORMED_JSON", "path.missing: Subject"}""".stripMargin
 
       Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) { components =>
@@ -262,14 +260,11 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
         status(result) shouldBe Status.BAD_REQUEST
         contentAsString(result) shouldBe errorResponse
       }
-    }
 
-    "return bad gateway if there is no connectivity to the downstream service" in {
+    "return bad gateway if there is no connectivity to the downstream service" in:
       val errorResponse = """{"code": "REQUEST_DOWNSTREAM", "desc": "An issue occurred when the downstream service tried to handle the request"}""".stripMargin
 
       val result = invoke()
       status(result)(30 seconds) shouldBe Status.BAD_GATEWAY
       contentAsString(result) shouldBe errorResponse
-    }
   }
-}

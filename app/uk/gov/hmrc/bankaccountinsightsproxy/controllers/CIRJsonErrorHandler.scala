@@ -17,7 +17,7 @@
 package uk.gov.hmrc.bankaccountinsightsproxy.controllers
 
 import play.api.http.Status.{BAD_REQUEST, NOT_FOUND}
-import play.api.libs.json.Json._
+import play.api.libs.json.Json.*
 import play.api.mvc.Results.{BadRequest, NotFound, Status}
 import play.api.mvc.{RequestHeader, Result}
 import play.api.{Configuration, Logger}
@@ -34,15 +34,15 @@ class CIRJsonErrorHandler @Inject()(
                                   httpAuditEvent: HttpAuditEvent,
                                   configuration : Configuration
                                 )(implicit ec: ExecutionContext
-                                ) extends JsonErrorHandler(auditConnector, httpAuditEvent, configuration)(ec) {
+                                ) extends JsonErrorHandler(auditConnector, httpAuditEvent, configuration)(ec):
 
   import httpAuditEvent.dataEvent
 
   private val logger = Logger(getClass)
 
-  override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = {
+  override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = 
     implicit val headerCarrier: HeaderCarrier = hc(request)
-    val result = statusCode match {
+    val result = statusCode match
       case NOT_FOUND =>
         auditConnector.sendEvent(
           dataEvent(
@@ -63,7 +63,7 @@ class CIRJsonErrorHandler @Inject()(
             detail          = Map.empty
           )
         )
-        def constructErrorMessage(input: String): String = {
+        def constructErrorMessage(input: String): String = 
           val unrecognisedTokenJsonError = "^Invalid Json: Unrecognized token '(.*)':.*".r
           val invalidJson                = "^(?s)Invalid Json:.*".r
           val jsonValidationError        = "^Json validation error.*".r
@@ -81,7 +81,6 @@ class CIRJsonErrorHandler @Inject()(
             case parameterParseError(toBeRedacted)        => input.replace(toBeRedacted, "REDACTED")
             case _                                        => "bad request, cause: REDACTED"
           }
-        }
         val msg = constructErrorMessage(message)
 
         BadRequest(toJson(ErrorResponse(BAD_REQUEST, msg)))
@@ -101,7 +100,8 @@ class CIRJsonErrorHandler @Inject()(
           else message
 
         Status(statusCode)(toJson(ErrorResponse(statusCode, msg)))
-    }
+    
     Future.successful(result)
-  }
-}
+  end onClientError
+    
+

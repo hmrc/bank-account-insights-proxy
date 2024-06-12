@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets
 import java.util.Base64
 import javax.inject.Inject
 
-class ExtendedServicesConfig @Inject()(configuration: Configuration) extends ServicesConfig(configuration) {
+class ExtendedServicesConfig @Inject()(configuration: Configuration) extends ServicesConfig(configuration):
 
   def getRequiredBase64EncodedConfString(confKey: String): String =
     new String(Base64.getDecoder.decode(getRequiredConfString(confKey)), StandardCharsets.UTF_8)
@@ -52,4 +52,3 @@ class ExtendedServicesConfig @Inject()(configuration: Configuration) extends Ser
   def getStringSeq(confKey: String, defaults: => Seq[String]): Seq[String] =
     configuration.getOptional[Seq[String]](s"$rootServices.$confKey")
           .getOrElse(defaults)
-}

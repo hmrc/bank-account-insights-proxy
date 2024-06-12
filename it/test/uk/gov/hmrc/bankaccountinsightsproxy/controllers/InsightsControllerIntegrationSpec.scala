@@ -35,7 +35,7 @@ import uk.gov.hmrc.bankaccountinsightsproxy.connectors.*
 import play.api.libs.ws.DefaultBodyWritables.*
 import play.api.libs.ws.JsonBodyReadables.*
 import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 class InsightsControllerIntegrationSpec
   extends AnyWordSpec
@@ -43,18 +43,17 @@ class InsightsControllerIntegrationSpec
     with ScalaFutures
     with IntegrationPatience
     with GuiceOneServerPerSuite
-    with MockitoSugar {
+    with MockitoSugar:
   private val defaultDuration = 5.seconds
 
   private val wsClient = app.injector.instanceOf[WSClient]
   private val baseUrl = s"http://localhost:$port"
 
-  private lazy val mockDownstreamConnector: DownstreamConnector = {
+  private lazy val mockDownstreamConnector: DownstreamConnector =
     val _mock = mock[DownstreamConnector]
     when(_mock.checkConnectivity(any(), any())(any())).thenReturn(Future.successful(true))
     when(_mock.forward(any(), any(), any())(any())).thenReturn(Future.successful(Ok("{}")))
     _mock
-  }
 
   override def fakeApplication(): Application =
     GuiceApplicationBuilder()
@@ -64,27 +63,25 @@ class InsightsControllerIntegrationSpec
 
   "InsightsController" should {
     "respond with OK status" when {
-      "valid json payload is provided to the /check/insights endpoint" in {
+      "valid json payload is provided to the /check/insights endpoint" in:
         val response = Await.result(
           wsClient.url(s"${baseUrl}/bank-account-insights/check/insights")
             .withHttpHeaders(HeaderNames.CONTENT_TYPE -> "application/json")
             .post("""{"sortCode":"123456", "accountNumber":"12345678"}"""), defaultDuration)
 
         response.status shouldBe OK
-      }
 
-      "valid json payload is provided to the /ipp endpoint" in {
+      "valid json payload is provided to the /ipp endpoint" in:
         val response = Await.result(
           wsClient.url(s"${baseUrl}/bank-account-insights/ipp")
             .withHttpHeaders(HeaderNames.CONTENT_TYPE -> "application/json")
             .post("""{"sortCode":"123456", "accountNumber":"12345678"}"""), defaultDuration)
 
         response.status shouldBe OK
-      }
     }
 
     "respond with BAD_REQUEST status" when {
-      "invalid json payload is provided to the /check/insights endpoint" in {
+      "invalid json payload is provided to the /check/insights endpoint" in:
         val response = Await.result(
           wsClient.url(s"${baseUrl}/bank-account-insights/check/insights")
             .withHttpHeaders(HeaderNames.CONTENT_TYPE -> "application/json")
@@ -94,9 +91,8 @@ class InsightsControllerIntegrationSpec
         val responseBodyJs = response.body[JsValue]
         (responseBodyJs \ "statusCode").as[Int] shouldBe BAD_REQUEST
         (responseBodyJs \ "message").as[String] shouldBe "bad request, cause: invalid json"
-      }
 
-      "invalid json payload is provided to the /ipp endpoint" in {
+      "invalid json payload is provided to the /ipp endpoint" in:
         val response = Await.result(
           wsClient.url(s"${baseUrl}/bank-account-insights/ipp")
             .withHttpHeaders(HeaderNames.CONTENT_TYPE -> "application/json")
@@ -106,7 +102,6 @@ class InsightsControllerIntegrationSpec
         val responseBodyJs = response.body[JsValue]
         (responseBodyJs \ "statusCode").as[Int] shouldBe BAD_REQUEST
         (responseBodyJs \ "message").as[String] shouldBe "bad request, cause: invalid json"
-      }
     }
   }
-}
+end InsightsControllerIntegrationSpec

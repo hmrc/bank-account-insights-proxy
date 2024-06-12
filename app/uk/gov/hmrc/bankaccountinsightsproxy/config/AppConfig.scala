@@ -25,7 +25,7 @@ import java.nio.charset.StandardCharsets
 import java.util.Base64
 
 @Singleton
-class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
+class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig):
   val bankAccountInsightsBaseUrl: String = servicesConfig.baseUrl("bank-account-insights")
   val bankAccountInsightsAuthToken = s"Basic ${createAuth("bank-account-insights.authToken")}"
 
@@ -33,10 +33,7 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
     AppConfig.createAuth(
       config.get[String]("appName"),
       servicesConfig.getConfString(authTokenKey, "invalid-token"))
-}
 
-object AppConfig {
-  def createAuth(appName: String, authToken: String): String = Base64.getEncoder.encodeToString(
-    s"$appName:$authToken".getBytes(StandardCharsets.UTF_8)
-  )
-}
+object AppConfig:
+  def createAuth(appName: String, authToken: String): String =
+    Base64.getEncoder.encodeToString(s"$appName:$authToken".getBytes(StandardCharsets.UTF_8))
