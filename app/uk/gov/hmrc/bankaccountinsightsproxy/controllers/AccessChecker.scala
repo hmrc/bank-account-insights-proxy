@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.bankaccountinsightsproxy.controllers
+package uk.gov.hmrc.bankaccountinsightsproxy
+package controllers
 
 import org.slf4j.LoggerFactory
 import play.api.Configuration

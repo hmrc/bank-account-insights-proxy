@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.bankaccountinsightsproxy.connectors
+package uk.gov.hmrc.bankaccountinsightsproxy
+package connectors
 
 import play.api.Logger
 import play.api.http.HeaderNames.{AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, HOST}

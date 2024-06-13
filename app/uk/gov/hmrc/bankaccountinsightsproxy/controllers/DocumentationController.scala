@@ -23,6 +23,10 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
 
-class DocumentationController @Inject()(assets: Assets, cc: ControllerComponents, configuration: Configuration) extends BackendController(cc):
+class DocumentationController @Inject() (
+    assets: Assets,
+    cc: ControllerComponents,
+    configuration: Configuration
+) extends BackendController(cc):
   def openApiIPP: Action[AnyContent] =
     assets.at(s"/public/docs", "insights-ipp-openapi.yaml")

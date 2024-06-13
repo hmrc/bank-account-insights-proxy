@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.bankaccountinsightsproxy.config
+package uk.gov.hmrc.bankaccountinsightsproxy
+package config
 
 import com.google.inject.AbstractModule
 import play.api.{Configuration, Environment}

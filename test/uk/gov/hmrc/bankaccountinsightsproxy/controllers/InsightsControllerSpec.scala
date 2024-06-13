@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.bankaccountinsightsproxy.controllers
+package uk.gov.hmrc.bankaccountinsightsproxy
+package controllers
 
 import org.apache.pekko.stream.Materializer
 import org.scalatest.matchers.should.Matchers
@@ -37,18 +38,30 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 
-class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite:
+class InsightsControllerSpec
+    extends AnyWordSpec
+    with Matchers
+    with GuiceOneAppPerSuite:
   val insightsPort = 11222
   val authToken = "test-token"
 
-  implicit val controllerComponents: ControllerComponents = Helpers.stubControllerComponents()
+  implicit val controllerComponents: ControllerComponents =
+    Helpers.stubControllerComponents()
 
   override lazy val app: Application = new GuiceApplicationBuilder()
-    .configure("microservice.services.bank-account-insights.port" -> insightsPort)
-    .configure("microservice.services.bank-account-insights.authToken" -> authToken)
+    .configure(
+      "microservice.services.bank-account-insights.port" -> insightsPort
+    )
+    .configure(
+      "microservice.services.bank-account-insights.authToken" -> authToken
+    )
     .configure("microservice.services.access-control.enabled" -> true)
-    .configure("microservice.services.access-control.allow-list.0" -> "example-service")
-    .configure("microservice.services.access-control.allow-list.1" -> "proxy-service")
+    .configure(
+      "microservice.services.access-control.allow-list.0" -> "example-service"
+    )
+    .configure(
+      "microservice.services.access-control.allow-list.1" -> "proxy-service"
+    )
     .overrides(bind[ControllerComponents].toInstance(controllerComponents))
     .build()
 
@@ -57,7 +70,8 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
 
   "POST /check/insights" when {
     val path = "/check/insights"
-    val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
+    val request =
+      """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
     val response =
       """{
         |  "score": "100",
@@ -66,33 +80,68 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
         |}""".stripMargin
 
     "the user-agent is on the allow list" should {
-      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "example-service", "Content-Type" -> "application/json")
+      val headers = Seq(
+        "True-Calling-Client" -> "example-service",
+        "User-Agent" -> "example-service",
+        "Content-Type" -> "application/json"
+      )
 
       behave like downstreamConnectorEndpoint(path, response) { () =>
-        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
       }
     }
 
     "there are multiple user-agents all of which are present on the allow list" should {
-      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "proxy-service", "User-Agent" -> "example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+      val headers = Seq(
+        "True-Calling-Client" -> "example-service",
+        "User-Agent" -> "proxy-service",
+        "User-Agent" -> "example-service",
+        "Content-Type" -> "application/json",
+        "Authorization" -> "1234"
+      )
 
       behave like downstreamConnectorEndpoint(path, response) { () =>
-        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
       }
     }
 
     "there is a comma separated user-agent and all components of it are present on the allow list" should {
-      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "proxy-service,example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+      val headers = Seq(
+        "True-Calling-Client" -> "example-service",
+        "User-Agent" -> "proxy-service,example-service",
+        "Content-Type" -> "application/json",
+        "Authorization" -> "1234"
+      )
 
       behave like downstreamConnectorEndpoint(path, response) { () =>
-        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
       }
     }
 
     "the user-agent is NOT on the allow list" should {
       "return forbidden" in {
-        val headers = Seq("True-Calling-Client" -> "another-service", "User-Agent" -> "another-service", "Content-Type" -> "application/json")
-        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        val headers = Seq(
+          "True-Calling-Client" -> "another-service",
+          "User-Agent" -> "another-service",
+          "Content-Type" -> "application/json"
+        )
+        val result = controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
 
         status(result) shouldBe Status.FORBIDDEN
       }
@@ -100,8 +149,18 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
 
     "there are multiple user-agents but none are on the allow list" should {
       "return forbidden" in {
-        val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "another-service", "User-Agent" -> "more-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
-        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        val headers = Seq(
+          "True-Calling-Client" -> "example-service",
+          "User-Agent" -> "another-service",
+          "User-Agent" -> "more-service",
+          "Content-Type" -> "application/json",
+          "Authorization" -> "1234"
+        )
+        val result = controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
 
         status(result) shouldBe Status.FORBIDDEN
       }
@@ -109,8 +168,17 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
 
     "there is a comma separated user-agent but only one of it's components are on the allow list" should {
       "return forbidden" in {
-        val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "proxy-service,another-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
-        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        val headers = Seq(
+          "True-Calling-Client" -> "example-service",
+          "User-Agent" -> "proxy-service,another-service",
+          "Content-Type" -> "application/json",
+          "Authorization" -> "1234"
+        )
+        val result = controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
 
         status(result) shouldBe Status.FORBIDDEN
       }
@@ -118,25 +186,45 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
 
     "there is a comma separated user-agent but none of it's component are on the allow list" should {
       "return forbidden" in {
-        val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "another-service,more-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
-        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        val headers = Seq(
+          "True-Calling-Client" -> "example-service",
+          "User-Agent" -> "another-service,more-service",
+          "Content-Type" -> "application/json",
+          "Authorization" -> "1234"
+        )
+        val result = controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
 
         status(result) shouldBe Status.FORBIDDEN
       }
     }
 
     "there is an originator id in the request which matches a value on the allow list, but the user-agent does not" should {
-      val headers = Seq("True-Calling-Client" -> "example-service", "OriginatorId" -> "example-service", "User-Agent" -> "invalid-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+      val headers = Seq(
+        "True-Calling-Client" -> "example-service",
+        "OriginatorId" -> "example-service",
+        "User-Agent" -> "invalid-service",
+        "Content-Type" -> "application/json",
+        "Authorization" -> "1234"
+      )
 
       behave like downstreamConnectorEndpoint(path, response) { () =>
-        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
       }
     }
   }
 
   "POST /ipp" when {
     val path = "/ipp"
-    val request = """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
+    val request =
+      """{"account": {"accountNumber": "12345667", "sortCode": "123456"}}""".stripMargin
     val response =
       """{
         |  "score": "100",
@@ -145,33 +233,68 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
         |}""".stripMargin
 
     "the user-agent is on the allow list" should {
-      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "example-service", "Content-Type" -> "application/json")
+      val headers = Seq(
+        "True-Calling-Client" -> "example-service",
+        "User-Agent" -> "example-service",
+        "Content-Type" -> "application/json"
+      )
 
       behave like downstreamConnectorEndpoint(path, response) { () =>
-        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
       }
     }
 
     "there are multiple user-agents all of which are present on the allow list" should {
-      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "proxy-service", "User-Agent" -> "example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+      val headers = Seq(
+        "True-Calling-Client" -> "example-service",
+        "User-Agent" -> "proxy-service",
+        "User-Agent" -> "example-service",
+        "Content-Type" -> "application/json",
+        "Authorization" -> "1234"
+      )
 
       behave like downstreamConnectorEndpoint(path, response) { () =>
-        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
       }
     }
 
     "there is a comma separated user-agent and all components of it are present on the allow list" should {
-      val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "proxy-service,example-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+      val headers = Seq(
+        "True-Calling-Client" -> "example-service",
+        "User-Agent" -> "proxy-service,example-service",
+        "Content-Type" -> "application/json",
+        "Authorization" -> "1234"
+      )
 
       behave like downstreamConnectorEndpoint(path, response) { () =>
-        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
       }
     }
 
     "the user-agent is NOT on the allow list" should {
       "return forbidden" in {
-        val headers = Seq("True-Calling-Client" -> "another-service", "User-Agent" -> "another-service", "Content-Type" -> "application/json")
-        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        val headers = Seq(
+          "True-Calling-Client" -> "another-service",
+          "User-Agent" -> "another-service",
+          "Content-Type" -> "application/json"
+        )
+        val result = controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
 
         status(result) shouldBe Status.FORBIDDEN
       }
@@ -179,8 +302,18 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
 
     "there are multiple user-agents but none are on the allow list" should {
       "return forbidden" in {
-        val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "another-service", "User-Agent" -> "more-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
-        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        val headers = Seq(
+          "True-Calling-Client" -> "example-service",
+          "User-Agent" -> "another-service",
+          "User-Agent" -> "more-service",
+          "Content-Type" -> "application/json",
+          "Authorization" -> "1234"
+        )
+        val result = controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
 
         status(result) shouldBe Status.FORBIDDEN
       }
@@ -188,8 +321,17 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
 
     "there is a comma separated user-agent but only one of it's components are on the allow list" should {
       "return forbidden" in {
-        val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "proxy-service,another-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
-        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        val headers = Seq(
+          "True-Calling-Client" -> "example-service",
+          "User-Agent" -> "proxy-service,another-service",
+          "Content-Type" -> "application/json",
+          "Authorization" -> "1234"
+        )
+        val result = controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
 
         status(result) shouldBe Status.FORBIDDEN
       }
@@ -197,33 +339,64 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
 
     "there is a comma separated user-agent but none of it's component are on the allow list" should {
       "return forbidden" in {
-        val headers = Seq("True-Calling-Client" -> "example-service", "User-Agent" -> "another-service,more-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
-        val result = controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        val headers = Seq(
+          "True-Calling-Client" -> "example-service",
+          "User-Agent" -> "another-service,more-service",
+          "Content-Type" -> "application/json",
+          "Authorization" -> "1234"
+        )
+        val result = controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
 
         status(result) shouldBe Status.FORBIDDEN
       }
     }
 
     "there is an originator id in the request which matches a value on the allow list, but the user-agent does not" should {
-      val headers = Seq("True-Calling-Client" -> "example-service", "OriginatorId" -> "example-service", "User-Agent" -> "invalid-service", "Content-Type" -> "application/json", "Authorization" -> "1234")
+      val headers = Seq(
+        "True-Calling-Client" -> "example-service",
+        "OriginatorId" -> "example-service",
+        "User-Agent" -> "invalid-service",
+        "Content-Type" -> "application/json",
+        "Authorization" -> "1234"
+      )
 
       behave like downstreamConnectorEndpoint(path, response) { () =>
-        controller.checkInsights()(FakeRequest("POST", path).withJsonBody(Json.parse(request)).withHeaders(headers: _*))
+        controller.checkInsights()(
+          FakeRequest("POST", path)
+            .withJsonBody(Json.parse(request))
+            .withHeaders(headers: _*)
+        )
       }
     }
   }
 
-  def downstreamConnectorEndpoint(url: String, response: String)(invoke: () => Future[Result]): Unit = {
+  def downstreamConnectorEndpoint(url: String, response: String)(
+      invoke: () => Future[Result]
+  ): Unit = {
     "forward a 200 response from the downstream service" in:
 
-      Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) { components =>
-        import components.{defaultActionBuilder => Action}
-        {
-          case r@SPOST(u) if u.path == url =>
-            r.headers.get("True-Calling-Client") shouldBe Some("example-service")
-            r.headers.get("Authorization") shouldBe Some("Basic " + AppConfig.createAuth("bank-account-insights-proxy", authToken))
-            Action(Ok(response).withHeaders("Content-Type" -> "application/json"))
-        }
+      Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) {
+        components =>
+          import components.{defaultActionBuilder => Action}
+          {
+            case r @ SPOST(u) if u.path == url =>
+              r.headers.get("True-Calling-Client") shouldBe Some(
+                "example-service"
+              )
+              r.headers.get("Authorization") shouldBe Some(
+                "Basic " + AppConfig.createAuth(
+                  "bank-account-insights-proxy",
+                  authToken
+                )
+              )
+              Action(
+                Ok(response).withHeaders("Content-Type" -> "application/json")
+              )
+          }
       } { _ =>
 
         val result = invoke()
@@ -232,14 +405,20 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
       }
 
     "forward a 400 response from the downstream service" in:
-      val errorResponse = """{"code": "MALFORMED_JSON", "path.missing: Subject"}""".stripMargin
+      val errorResponse =
+        """{"code": "MALFORMED_JSON", "path.missing: Subject"}""".stripMargin
 
-      Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) { components =>
-        import components.{defaultActionBuilder => Action}
-        {
-          case r@SPOST(u) if u.path == url =>
-            Action(BadRequest(errorResponse).withHeaders("Content-Type" -> "application/json"))
-        }
+      Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) {
+        components =>
+          import components.{defaultActionBuilder => Action}
+          {
+            case r @ SPOST(u) if u.path == url =>
+              Action(
+                BadRequest(errorResponse).withHeaders(
+                  "Content-Type" -> "application/json"
+                )
+              )
+          }
       } { _ =>
         val result = invoke()
         status(result) shouldBe Status.BAD_REQUEST
@@ -247,14 +426,20 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
       }
 
     "handle a malformed json payload" in:
-      val errorResponse = """{"code": "MALFORMED_JSON", "path.missing: Subject"}""".stripMargin
+      val errorResponse =
+        """{"code": "MALFORMED_JSON", "path.missing: Subject"}""".stripMargin
 
-      Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) { components =>
-        import components.{defaultActionBuilder => Action}
-        {
-          case r@SPOST(u) if u.path == url =>
-            Action(BadRequest(errorResponse).withHeaders("Content-Type" -> "application/json"))
-        }
+      Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) {
+        components =>
+          import components.{defaultActionBuilder => Action}
+          {
+            case r @ SPOST(u) if u.path == url =>
+              Action(
+                BadRequest(errorResponse).withHeaders(
+                  "Content-Type" -> "application/json"
+                )
+              )
+          }
       } { _ =>
         val result = invoke()
         status(result) shouldBe Status.BAD_REQUEST
@@ -262,7 +447,8 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
       }
 
     "return bad gateway if there is no connectivity to the downstream service" in:
-      val errorResponse = """{"code": "REQUEST_DOWNSTREAM", "desc": "An issue occurred when the downstream service tried to handle the request"}""".stripMargin
+      val errorResponse =
+        """{"code": "REQUEST_DOWNSTREAM", "desc": "An issue occurred when the downstream service tried to handle the request"}""".stripMargin
 
       val result = invoke()
       status(result)(30 seconds) shouldBe Status.BAD_GATEWAY
