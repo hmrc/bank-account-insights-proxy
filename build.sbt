@@ -1,6 +1,6 @@
 import uk.gov.hmrc.DefaultBuildSettings
 
-ThisBuild / scalaVersion        := "2.13.12"
+ThisBuild / scalaVersion        := "2.13.16"
 ThisBuild / majorVersion        := 0
 
 lazy val microservice = Project("bank-account-insights-proxy", file("."))
@@ -14,7 +14,6 @@ lazy val microservice = Project("bank-account-insights-proxy", file("."))
     buildInfoPackage := "buildinfo"
   )
   .settings(PlayKeys.playDefaultPort := 9865)
-  .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings)
 
 lazy val it = project.in(file("it"))

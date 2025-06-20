@@ -17,18 +17,19 @@
 package uk.gov.hmrc.bankaccountinsightsproxy.connectors
 
 import play.api.Logger
-import play.api.http.HeaderNames.{AUTHORIZATION, CONTENT_TYPE, CONTENT_LENGTH, HOST}
+import play.api.http.HeaderNames.{AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, HOST}
 import play.api.http.{HeaderNames, HttpEntity, MimeTypes}
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Results.{BadGateway, InternalServerError, MethodNotAllowed}
 import play.api.mvc.{AnyContent, Request, ResponseHeader, Result}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class DownstreamConnector @Inject()(httpClient: HttpClient) {
+class DownstreamConnector @Inject()(httpClient: HttpClientV2) {
   private val logger = Logger(this.getClass.getSimpleName)
   def forward(request: Request[AnyContent], url: String, authToken: String)(implicit ec: ExecutionContext): Future[Result] = {
     import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
@@ -41,7 +42,11 @@ class DownstreamConnector @Inject()(httpClient: HttpClient) {
         implicit val hc: HeaderCarrier = DownstreamConnector.overrideHeaderCarrier(authToken)
 
         try {
-          httpClient.POST[Option[JsValue], HttpResponse](url = url, body = request.body.asJson, onwardHeaders)
+          httpClient
+            .post(url"$url")
+            .withBody(request.body.asJson.getOrElse(JsObject.empty))
+            .setHeader(onwardHeaders: _*)
+            .execute[HttpResponse]
             .map { response: HttpResponse =>
               val returnHeaders = response.headers
                 .filterNot { case (n, _) => n == CONTENT_TYPE || n == CONTENT_LENGTH }
@@ -68,7 +73,11 @@ class DownstreamConnector @Inject()(httpClient: HttpClient) {
     implicit val hc: HeaderCarrier = DownstreamConnector.overrideHeaderCarrier(authToken)
 
     try {
-      httpClient.POST[Option[JsValue], HttpResponse](url = url, body = Some(Json.parse("{}"))).map {
+      httpClient
+        .post(url"$url")
+        .withBody(Json.parse("{}"))
+        .execute
+        .map {
         case response if response.status > 400 => false
         case response if response.status / 100 == 5 => false
         case _ => true
