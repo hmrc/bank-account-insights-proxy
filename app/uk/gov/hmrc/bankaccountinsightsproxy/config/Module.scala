@@ -19,9 +19,6 @@ package uk.gov.hmrc.bankaccountinsightsproxy.config
 import com.google.inject.AbstractModule
 import play.api.{Configuration, Environment}
 
-import scala.concurrent.duration._
-import scala.language.postfixOps
-
 class Module(environment: Environment, playConfig: Configuration) extends AbstractModule {
 
   override def configure(): Unit = {

@@ -16,18 +16,16 @@
 
 package uk.gov.hmrc.bankaccountinsightsproxy.controllers
 
-import org.slf4j.LoggerFactory
-import play.api.Configuration
 import play.api.http.HeaderNames
 import play.api.mvc.Request
+import play.api.{Configuration, Logging}
 import uk.gov.hmrc.bankaccountinsightsproxy.config.ExtendedServicesConfig
 import uk.gov.hmrc.bankaccountinsightsproxy.controllers.AccessChecker.{accessControlAllowListAbsoluteKey, accessControlAllowListKey, accessControlEnabledKey, accessRequestFormUrlKey}
 
 import javax.inject.{Inject, Singleton}
 
 @Singleton
-class AccessChecker @Inject()(config: Configuration) extends ExtendedServicesConfig(config) {
-  private val logger = LoggerFactory.getLogger(this.getClass)
+class AccessChecker @Inject()(config: Configuration) extends ExtendedServicesConfig(config) with Logging {
 
   private val accessRequestFormUrl: String = getRequiredConfString(accessRequestFormUrlKey)
 

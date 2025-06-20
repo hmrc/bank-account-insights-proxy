@@ -20,7 +20,7 @@ import play.api.http.Status.{BAD_REQUEST, NOT_FOUND}
 import play.api.libs.json.Json._
 import play.api.mvc.Results.{BadRequest, NotFound, Status}
 import play.api.mvc.{RequestHeader, Result}
-import play.api.{Configuration, Logger}
+import play.api.{Configuration, Logging}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.backend.http.{ErrorResponse, JsonErrorHandler}
@@ -34,11 +34,10 @@ class CIRJsonErrorHandler @Inject()(
                                   httpAuditEvent: HttpAuditEvent,
                                   configuration : Configuration
                                 )(implicit ec: ExecutionContext
-                                ) extends JsonErrorHandler(auditConnector, httpAuditEvent, configuration)(ec) {
+                                ) extends JsonErrorHandler(auditConnector, httpAuditEvent, configuration)(ec) with Logging {
 
   import httpAuditEvent.dataEvent
 
-  private val logger = Logger(getClass)
 
   override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = {
     implicit val headerCarrier: HeaderCarrier = hc(request)

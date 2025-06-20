@@ -18,12 +18,10 @@ package uk.gov.hmrc.bankaccountinsightsproxy.controllers
 
 import controllers.Assets
 import play.api.Configuration
-import play.api.http.{ContentTypes, MimeTypes}
-import play.api.mvc.{Action, AnyContent, Codec, ControllerComponents}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
-import scala.concurrent.Future
 
 class DocumentationController @Inject()(assets: Assets, cc: ControllerComponents, configuration: Configuration) extends BackendController(cc) {
   def openApiIPP: Action[AnyContent] = {
