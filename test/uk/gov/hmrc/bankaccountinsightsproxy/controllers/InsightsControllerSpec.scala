@@ -222,7 +222,7 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
           case r@SPOST(u) if u.path == url =>
             r.headers.get("True-Calling-Client") shouldBe Some("example-service")
             r.headers.get("Authorization") shouldBe Some("Basic " + AppConfig.createAuth("bank-account-insights-proxy", authToken))
-            Action(Ok(response).withHeaders("Content-Type" -> "application/json"))
+            Action(Ok(response).as("application/json"))
         }
       } { _ =>
 
@@ -239,7 +239,7 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
         import components.{defaultActionBuilder => Action}
         {
           case r@SPOST(u) if u.path == url =>
-            Action(BadRequest(errorResponse).withHeaders("Content-Type" -> "application/json"))
+            Action(BadRequest(errorResponse).as("application/json"))
         }
       } { _ =>
         val result = invoke()
@@ -255,7 +255,7 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
         import components.{defaultActionBuilder => Action}
         {
           case r@SPOST(u) if u.path == url =>
-            Action(BadRequest(errorResponse).withHeaders("Content-Type" -> "application/json"))
+            Action(BadRequest(errorResponse).as("application/json"))
         }
       } { _ =>
         val result = invoke()
