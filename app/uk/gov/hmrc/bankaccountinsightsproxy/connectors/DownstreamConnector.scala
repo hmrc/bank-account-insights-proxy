@@ -37,7 +37,7 @@ class DownstreamConnector @Inject()(httpClient: HttpClientV2) {
     logger.info(s"Forwarding to downstream url: $url")
 
     (request.method, request.headers(CONTENT_TYPE).toLowerCase()) match {
-      case ("POST", "application/json") =>
+      case ("POST", MimeTypes.JSON) =>
         val onwardHeaders = request.headers.remove(CONTENT_LENGTH, CONTENT_TYPE, HOST, AUTHORIZATION).headers
         implicit val hc: HeaderCarrier = DownstreamConnector.overrideHeaderCarrier(authToken)
 
@@ -49,13 +49,13 @@ class DownstreamConnector @Inject()(httpClient: HttpClientV2) {
             .execute[HttpResponse]
             .map { response: HttpResponse =>
               val returnHeaders = response.headers
-                .filterNot { case (n, _) => n == CONTENT_TYPE || n == CONTENT_LENGTH }
+                .filterNot { case (n, _) => n.toUpperCase() == CONTENT_TYPE.toUpperCase() || n == CONTENT_LENGTH.toUpperCase() }
                 .view.mapValues(x => x.mkString).toMap
 
               Result(
                 ResponseHeader(response.status, returnHeaders),
-                HttpEntity.Streamed(response.bodyAsSource, None, response.header(CONTENT_TYPE))
-              )
+                HttpEntity.Streamed(response.bodyAsSource, None, None)
+              ).as(response.header(CONTENT_TYPE).getOrElse(MimeTypes.JSON))
             }.recoverWith { case t: Throwable =>
             Future.successful(BadGateway("{\"code\": \"REQUEST_DOWNSTREAM\", \"desc\": \"An issue occurred when the downstream service tried to handle the request\"}").as(MimeTypes.JSON))
           }
