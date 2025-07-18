@@ -156,7 +156,7 @@
 //                |      ]
 //                |    }
 //                |  ]
-//                |}""".stripMargin).withHeaders("Content-Type" -> "application/json"))
+//                |}""".stripMargin).as("application/json"))
 //        }
 //      } { _ =>
 //        val payload =
