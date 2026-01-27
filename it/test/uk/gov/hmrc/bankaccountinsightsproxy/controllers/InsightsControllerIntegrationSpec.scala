@@ -35,6 +35,8 @@ import uk.gov.hmrc.bankaccountinsightsproxy.connectors.DownstreamConnector
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import play.api.libs.ws.writeableOf_String
+import play.api.libs.ws.readableAsJson
 
 class InsightsControllerIntegrationSpec
   extends AnyWordSpec

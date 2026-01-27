@@ -27,6 +27,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+import play.api.libs.ws.writeableOf_JsValue
 
 @Singleton
 class DownstreamConnector @Inject()(httpClient: HttpClientV2) {
@@ -47,7 +48,7 @@ class DownstreamConnector @Inject()(httpClient: HttpClientV2) {
             .withBody(request.body.asJson.getOrElse(JsObject.empty))
             .setHeader(onwardHeaders: _*)
             .execute[HttpResponse]
-            .map { response: HttpResponse =>
+            .map { (response: HttpResponse) =>
               Result(
                 ResponseHeader(response.status, cleanseResponseHeaders(response)),
                 HttpEntity.Streamed(response.bodyAsSource, None, response.header(CONTENT_TYPE))
