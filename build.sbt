@@ -1,7 +1,7 @@
 import uk.gov.hmrc.DefaultBuildSettings
 
-ThisBuild / scalaVersion        := "2.13.16"
-ThisBuild / majorVersion        := 0
+ThisBuild / majorVersion        := 1
+ThisBuild / scalaVersion        := "3.3.7"
 
 lazy val microservice = Project("bank-account-insights-proxy", file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin, BuildInfoPlugin)
