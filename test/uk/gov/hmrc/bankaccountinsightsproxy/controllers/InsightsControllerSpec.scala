@@ -238,7 +238,7 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
       Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) { components =>
         import components.{defaultActionBuilder => Action}
         {
-          case r@SPOST(u) if u.path == url =>
+          case SPOST(u) if u.path == url =>
             Action(BadRequest(errorResponse).as("application/json"))
         }
       } { _ =>
@@ -254,7 +254,7 @@ class InsightsControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppP
       Server.withRouterFromComponents(ServerConfig(port = Some(insightsPort))) { components =>
         import components.{defaultActionBuilder => Action}
         {
-          case r@SPOST(u) if u.path == url =>
+          case SPOST(u) if u.path == url =>
             Action(BadRequest(errorResponse).as("application/json"))
         }
       } { _ =>
