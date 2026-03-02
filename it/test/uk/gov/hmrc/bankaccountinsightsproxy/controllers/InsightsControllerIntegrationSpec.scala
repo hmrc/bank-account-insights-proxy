@@ -52,7 +52,6 @@ class InsightsControllerIntegrationSpec
 
   private lazy val mockDownstreamConnector: DownstreamConnector = {
     val _mock = mock[DownstreamConnector]
-    when(_mock.checkConnectivity(any(), any())(any())).thenReturn(Future.successful(true))
     when(_mock.forward(any(), any(), any())(any())).thenReturn(Future.successful(Ok("{}")))
     _mock
   }
