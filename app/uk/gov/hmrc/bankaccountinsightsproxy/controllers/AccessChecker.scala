@@ -33,8 +33,12 @@ class AccessChecker @Inject()(config: Configuration) extends ExtendedServicesCon
   private val allowedClients: Set[String] = getStringSeq(accessControlAllowListKey,
     if (checkAllowList) throw new RuntimeException(s"Could not find config $accessControlAllowListAbsoluteKey") else Seq()).toSet
 
-  def areClientsAllowed(clients: Seq[String]): Boolean =
-    !checkAllowList || clients.forall(allowedClients.contains)
+  def areClientsAllowed(clients: Seq[String]): Boolean = {
+    logger.info(s"Clients received in the request header => ***$clients***")
+    val result = !checkAllowList || clients.forall(allowedClients.contains)
+    logger.info(s"Allowed clients => ***$allowedClients***")
+    result
+  }
 
   def forbiddenResponse(clients: Seq[String]): String =
     s"""{
@@ -47,8 +51,11 @@ class AccessChecker @Inject()(config: Configuration) extends ExtendedServicesCon
 
     if (originator.isDefined)
       Seq(originator.get)
-    else
-      req.headers.getAll(HeaderNames.USER_AGENT).flatMap(_.split(","))
+    else {
+      val userAgentsReceived = req.headers.getAll(HeaderNames.USER_AGENT).flatMap(_.split(","))
+      logger.info(s"User agents received in the request header => ***$userAgentsReceived***")
+      userAgentsReceived
+    }
   }
 }
 
